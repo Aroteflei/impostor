@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Impostor</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#111110">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Figtree:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<style>
+:root{--bg:#111110;--surface:#1c1c1a;--border:#2c2c2a;--fg:#f0ede8;--muted:#555;--muted2:#888;--red:#e84040;--green:#34c759;--inv-muted:rgba(17,17,16,.4);--inv-border:rgba(17,17,16,.2)}
+:root.light{--bg:#f5f3ef;--surface:#fff;--border:#e0ddd6;--fg:#111110;--muted:#aaa;--muted2:#777;--red:#d93030;--green:#2daa4a;--inv-muted:rgba(240,237,232,.45);--inv-border:rgba(240,237,232,.2)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Figtree',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;min-height:-webkit-fill-available;-webkit-font-smoothing:antialiased;overscroll-behavior:none;transition:background .2s,color .2s}
+.screen{display:none;min-height:100vh;min-height:-webkit-fill-available;flex-direction:column;padding:env(safe-area-inset-top,20px) 24px env(safe-area-inset-bottom,32px);animation:up .3s ease}
+.screen.active{display:flex}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:clamp(64px,20vw,100px);font-weight:700;letter-spacing:-3px;line-height:1;color:var(--fg);text-align:center}
+.btn{font-family:'Figtree',sans-serif;font-size:16px;font-weight:500;background:var(--fg);color:var(--bg);border:none;padding:18px;border-radius:14px;cursor:pointer;width:100%;-webkit-appearance:none;transition:opacity .1s;letter-spacing:-.2px}
+.btn:active{opacity:.7}.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:active{background:var(--surface);opacity:1}
+.btn-danger{background:var(--red);color:#fff}.btn-sm{padding:10px 18px;font-size:14px;border-radius:10px;width:auto}.btn:disabled{opacity:.2}
+.lbl{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.inp{background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--fg);font-family:'Figtree',sans-serif;font-size:16px;padding:13px 16px;outline:none;-webkit-appearance:none;width:100%;transition:border-color .15s}
+.inp:focus{border-color:var(--muted2)}.inp::placeholder{color:var(--muted)}
+#s-landing{align-items:center;justify-content:space-between;padding-top:max(env(safe-area-inset-top),80px);padding-bottom:max(env(safe-area-inset-bottom),48px)}
+.landing-btns{display:flex;flex-direction:column;gap:8px;width:100%}
+.mode-lbl{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-family:'Space Grotesk',sans-serif;font-weight:600;margin-top:20px;margin-bottom:-4px;text-align:center}
+.step-title{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1.5px;line-height:1.1}
+.step-sub{font-size:15px;color:var(--muted2);margin-top:6px}
+.count-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.count-btn{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--fg);padding:18px 0;cursor:pointer;-webkit-appearance:none;transition:all .12s;text-align:center}
+.count-btn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}.count-btn:active{opacity:.7}
+.player-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.player-n{font-size:12px;color:var(--muted);width:18px;text-align:center;flex-shrink:0;font-family:'Space Grotesk',sans-serif}
+.cats{display:flex;flex-direction:column;gap:6px}
+.cat{padding:13px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-family:'Figtree',sans-serif;font-size:15px;color:var(--muted2);cursor:pointer;text-align:left;-webkit-appearance:none;width:100%;transition:all .12s}
+.cat.on{border-color:var(--fg);color:var(--fg);background:transparent}.cat:active{opacity:.7}
+.cat-random{background:var(--border);border-color:var(--border);color:var(--fg);text-align:center;font-weight:500}
+.cat-group-lbl{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:16px;margin-bottom:2px}
+.cat-group-lbl:first-child{margin-top:0}
+.timer-setting{display:flex;align-items:center;gap:12px}
+.timer-toggle{position:relative;width:44px;height:26px;background:var(--border);border-radius:13px;cursor:pointer;border:none;transition:background .2s;flex-shrink:0}
+.timer-toggle.on{background:var(--green)}
+.timer-toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s}
+.timer-toggle.on::after{transform:translateX(18px)}
+.timer-desc{font-size:14px;color:var(--muted2);flex:1}
+.timer-val{display:flex;align-items:center;gap:8px}
+.timer-adj{width:30px;height:30px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--fg);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.timer-adj:active{background:var(--border)}
+.timer-secs{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;min-width:36px;text-align:center}
+.screen-reveal{justify-content:space-between;padding-top:max(env(safe-area-inset-top),60px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.rev-top{display:flex;flex-direction:column;gap:8px}
+.rev-count{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.rev-name{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;letter-spacing:-2px;line-height:1.05}
+.word-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:48px 28px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.word-card-cat{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.word-card-word{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,9vw,52px);font-weight:700;letter-spacing:-1.5px;text-align:center;color:var(--fg)}
+.word-card-word.imp{color:var(--red);font-size:clamp(24px,6vw,32px)}
+.rev-footer{display:flex;flex-direction:column;gap:8px}
+.rev-progress{font-size:13px;color:var(--muted2);text-align:center;margin-top:8px}
+.screen-game{gap:20px;padding-top:max(env(safe-area-inset-top),24px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.game-top{display:flex;justify-content:space-between;align-items:center;padding-right:44px}
+.game-round{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.game-cat{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.vote-quick{background:var(--red);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Figtree',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.vote-quick:active{opacity:.7}
+.starter-card{background:var(--fg);border-radius:20px;padding:28px 24px;text-align:center}
+.starter-lbl{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--inv-muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.starter-name{font-family:'Space Grotesk',sans-serif;font-size:42px;font-weight:700;letter-spacing:-1.5px;color:var(--bg)}
+.starter-sub{font-size:13px;color:var(--inv-muted);margin-top:6px}
+.order-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.order-title{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:14px 16px 10px}
+.order-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--border)}
+.order-item:first-of-type{border-top:none}
+.order-n{font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--muted);width:16px}
+.order-name{font-size:16px;color:var(--fg);flex:1}
+.order-start{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--fg);letter-spacing:.08em;background:var(--border);padding:3px 8px;border-radius:100px}
+.timer-bar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:14px}
+.timer-display{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1px;min-width:56px;text-align:center;transition:color .3s}
+.timer-display.warn{color:var(--red)}
+.timer-progress{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.timer-fill{height:100%;background:var(--fg);border-radius:3px;transition:width .25s linear,background .3s}
+.timer-fill.warn{background:var(--red)}
+.timer-ctrl{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.timer-ctrl:active{background:var(--border)}.timer-controls{display:flex;gap:8px}
+.screen-vote{gap:16px;padding-top:max(env(safe-area-inset-top),60px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.vote-q{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1.1}
+.vote-sub{font-size:14px;color:var(--muted2)}
+.vote-list{display:flex;flex-direction:column;gap:8px;flex:1}
+.vote-opt{padding:16px 18px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-family:'Figtree',sans-serif;font-size:16px;color:var(--fg);cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;-webkit-appearance:none;width:100%;transition:all .12s}
+.vote-opt.on{border-color:var(--fg);background:var(--fg);color:var(--bg)}
+.chk{opacity:0;font-size:16px;transition:opacity .12s}.vote-opt.on .chk{opacity:1}
+.vote-footer{display:flex;flex-direction:column;gap:8px}
+.home-btn{position:fixed;bottom:max(env(safe-area-inset-bottom),24px);right:24px;z-index:100;background:var(--surface);border:1px solid var(--border);color:var(--muted2);font-family:'Figtree',sans-serif;font-size:13px;padding:8px 14px;border-radius:100px;cursor:pointer}
+.home-btn:active{color:var(--fg);border-color:var(--muted2)}
+.screen-elim{justify-content:space-between;padding-top:max(env(safe-area-inset-top),60px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.elim-verdict{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;letter-spacing:-2px;line-height:1;margin-bottom:24px}
+.elim-verdict.caught{color:var(--fg)}.elim-verdict.safe{color:var(--red)}
+.elim-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.elim-lbl{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.elim-name{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1px}
+.elim-sub{font-size:15px;color:var(--muted2)}.elim-sub strong{color:var(--fg);font-weight:500}
+.score-pill{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
+.score-pill-lbl{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.score-info-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--border);color:var(--muted2);font-size:11px;font-family:'Space Grotesk',sans-serif;font-weight:700;cursor:pointer;border:none;vertical-align:middle;margin-left:6px;-webkit-appearance:none}
+.score-info-btn:active{background:var(--muted)}
+.score-info-box{display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:12px;font-size:13px;color:var(--muted2);line-height:1.5}
+.score-info-box.open{display:block}
+.score-info-box strong{color:var(--fg);font-weight:500}
+.score-pill-num{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;letter-spacing:-2px;color:var(--fg)}
+.elim-footer{display:flex;flex-direction:column;gap:8px}
+.vote-tally{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.vote-tally-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0}
+.vote-tally-name{color:var(--muted2)}.vote-tally-target{color:var(--fg);font-weight:500}
+.screen-guess{justify-content:space-between;padding-top:max(env(safe-area-inset-top),60px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.guess-title{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:700;letter-spacing:-2px;line-height:1}
+.guess-sub{font-size:14px;color:var(--muted2);margin-top:8px}
+.guess-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;gap:16px;align-items:center}
+.guess-cat{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.guess-result{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;letter-spacing:-2px;text-align:center;line-height:1}
+.guess-result.correct{color:var(--green)}.guess-result.wrong{color:var(--red)}
+.guess-footer{display:flex;flex-direction:column;gap:8px}
+.guess-input{background:var(--bg);border:1px solid var(--border);border-radius:14px;color:var(--fg);font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:600;padding:16px 20px;outline:none;-webkit-appearance:none;width:100%;text-align:center;letter-spacing:1px}
+.guess-input:focus{border-color:var(--muted2)}.guess-input::placeholder{color:var(--muted);font-weight:400;font-size:16px}
+.screen-result{justify-content:space-between;padding-top:max(env(safe-area-inset-top),60px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.verdict{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:700;letter-spacing:-3px;line-height:1}
+.verdict.players-win{color:var(--fg)}.verdict.imp-wins{color:var(--red)}
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;display:flex;flex-direction:column;gap:6px}
+.res-lbl{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.res-name{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1px}
+.res-info{font-size:13px;color:var(--muted2)}.res-info strong{color:var(--fg);font-weight:500}
+.res-btns{display:flex;flex-direction:column;gap:8px}
+.summary-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
+.summary-title{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.summary-row-name{color:var(--muted2)}.summary-row-val{color:var(--fg)}
+.screen-scores{gap:0;padding-top:max(env(safe-area-inset-top),24px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.scores-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.scores-title{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-1px}
+.scores-list{display:flex;flex-direction:column;gap:8px;flex:1}
+.score-row-item{display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+.score-row-item.top{background:var(--fg);border-color:var(--fg)}
+.s-pos{font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--muted);width:20px;text-align:center;font-weight:600}.s-pos.top{color:var(--inv-muted)}
+.s-name{font-size:16px;flex:1;color:var(--fg)}.s-name.top{color:var(--bg)}
+.s-right{display:flex;align-items:center;gap:10px}
+.s-pts{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--fg);min-width:28px}.s-pts.top{color:var(--bg)}
+.s-edit-btn{width:28px;height:28px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--muted2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.s-edit-btn:active{background:var(--surface);color:var(--fg)}.score-row-item.top .s-edit-btn{border-color:var(--inv-border);color:var(--inv-muted)}
+.scores-footer{display:flex;flex-direction:column;gap:8px;padding-top:16px}
+.lobby-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:24px;padding-bottom:20px}
+.room-code-card{background:var(--fg);border-radius:20px;padding:20px 24px;text-align:center}
+.room-code-lbl{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--inv-muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.room-code{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;letter-spacing:6px;color:var(--bg)}
+.room-code-share{font-size:12px;color:var(--inv-muted);margin-top:4px;cursor:pointer}.room-code-share:active{color:var(--bg)}
+.lobby-players{display:flex;flex-direction:column;gap:6px}
+.lobby-player{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.lobby-player-n{font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--muted);width:18px;text-align:center}
+.lobby-player-name{font-size:15px;flex:1}
+.lobby-player-host{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;color:var(--fg);letter-spacing:.08em;background:var(--border);padding:3px 8px;border-radius:100px}
+.lobby-player-you{font-size:12px;color:var(--muted2)}
+.lobby-cat-btn{padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface);font-family:'Figtree',sans-serif;font-size:14px;color:var(--muted2);cursor:pointer;text-align:left;-webkit-appearance:none;width:100%;display:flex;justify-content:space-between;align-items:center}
+.lobby-cat-btn.chosen{border-color:var(--fg);color:var(--fg)}.lobby-cat-btn:active{opacity:.7}
+.lobby-footer{display:flex;flex-direction:column;gap:8px;padding-top:16px}
+.lobby-wait{font-size:14px;color:var(--muted2);text-align:center;padding:18px}
+.code-input{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;text-transform:uppercase;background:var(--surface);border:1px solid var(--border);border-radius:16px;color:var(--fg);padding:20px;outline:none;-webkit-appearance:none;width:100%}
+.code-input:focus{border-color:var(--muted2)}.code-input::placeholder{color:var(--muted);letter-spacing:4px;font-size:20px}
+.join-title{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;letter-spacing:-1px}
+.join-form{display:flex;flex-direction:column;gap:12px}
+.join-footer{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.clue-list{display:flex;flex-direction:column;gap:8px}
+.clue-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.clue-item.current{border-color:var(--fg);background:transparent}.clue-item.waiting{opacity:.3}
+.clue-author{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;color:var(--muted2);min-width:70px;flex-shrink:0;padding-top:2px}
+.clue-text{font-size:16px;color:var(--fg);flex:1;word-break:break-word}
+.clue-text.pending{color:var(--muted);font-style:italic}
+.clue-input-wrap{display:flex;gap:8px;flex:1}
+.clue-input{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--fg);font-family:'Figtree',sans-serif;font-size:16px;padding:10px 14px;outline:none;-webkit-appearance:none;flex:1;min-width:0}
+.clue-input:focus{border-color:var(--muted2)}.clue-input::placeholder{color:var(--muted)}
+.clue-send{background:var(--fg);color:var(--bg);border:none;border-radius:10px;padding:10px 16px;font-family:'Figtree',sans-serif;font-size:14px;font-weight:500;cursor:pointer;flex-shrink:0}
+.clue-send:active{opacity:.7}.clue-send:disabled{opacity:.2}
+/* Audio clue */
+.clue-mode-pick{display:flex;gap:8px;flex:1}
+.clue-mode-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Figtree',sans-serif;font-size:14px;color:var(--fg);cursor:pointer;flex:1;text-align:center}
+.clue-mode-btn:active{opacity:.7}
+.clue-audio-wrap{display:flex;gap:8px;flex:1;align-items:center}
+.clue-rec-btn{width:48px;height:48px;border-radius:50%;border:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.clue-rec-btn.idle{background:var(--red);color:#fff}
+.clue-rec-btn.recording{background:var(--red);color:#fff;animation:recPulse 1s ease-in-out infinite}
+.clue-rec-btn.done{background:var(--surface);border:1px solid var(--border);color:var(--fg)}
+@keyframes recPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(232,64,64,.4)}50%{transform:scale(1.08);box-shadow:0 0 0 10px rgba(232,64,64,0)}}
+.rec-timer{font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--muted);min-width:30px;text-align:center}
+.rec-preview{flex:1;display:flex;gap:8px;align-items:center}
+.clue-audio-play{background:var(--surface);border:1px solid var(--border);color:var(--fg);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.clue-audio-play:active{opacity:.7}
+.clue-audio-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.clue-audio-bar-fill{height:100%;background:var(--fg);border-radius:2px;width:0%;transition:width .1s linear}
+/* Feedback */
+.fb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px}
+.fb-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px}
+.fb-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;color:var(--fg)}
+.fb-textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--fg);font-family:'Figtree',sans-serif;font-size:15px;padding:12px;outline:none;resize:none;height:100px;-webkit-appearance:none}
+.fb-textarea:focus{border-color:var(--muted2)}
+.fb-btns{display:flex;gap:8px}
+.fb-btns .btn{flex:1}
+.history-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:8px}
+.history-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.history-word{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.5px}
+.history-cat{font-size:11px;color:var(--muted2)}
+.history-detail{font-size:13px;color:var(--muted2)}.history-detail strong{color:var(--fg);font-weight:500}
+.screen-catpick{gap:16px;padding-top:max(env(safe-area-inset-top),40px);padding-bottom:max(env(safe-area-inset-bottom),80px)}
+.catpick-title{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-1px}
+.catpick-cats{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto}
+.theme-toggle{position:fixed;top:max(env(safe-area-inset-top),12px);right:16px;z-index:200;background:var(--surface);border:1px solid var(--border);color:var(--muted2);font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;transition:all .2s}
+.theme-toggle:active{opacity:.7}
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+.custom-cat-form{display:flex;flex-direction:column;gap:12px}
+.word-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:40px}
+.word-chip{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:6px 12px;font-size:13px;color:var(--fg);display:flex;align-items:center;gap:6px}
+.word-chip-x{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:0;line-height:1}
+@keyframes flipIn{0%{transform:rotateY(90deg);opacity:0}100%{transform:rotateY(0);opacity:1}}
+.word-card.flip{animation:flipIn .5s ease;transform-style:preserve-3d}
+/* Card reveal */
+.word-card.reveal-anim{animation:cardReveal .6s cubic-bezier(.4,.0,.2,1) forwards}
+@keyframes cardReveal{0%{transform:scale(.88) rotateY(90deg);opacity:0}50%{transform:scale(1.02) rotateY(0);opacity:1}100%{transform:scale(1) rotateY(0);opacity:1}}
+@keyframes impGlow{0%,100%{text-shadow:0 0 20px rgba(232,64,64,.3)}50%{text-shadow:0 0 40px rgba(232,64,64,.7),0 0 80px rgba(232,64,64,.3)}}
+.word-card-word.imp.revealed{animation:impGlow 1.5s ease-in-out infinite}
+.countdown-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.88);z-index:900;display:flex;align-items:center;justify-content:center}
+.countdown-num{font-family:'Space Grotesk',sans-serif;font-size:clamp(100px,30vw,160px);font-weight:700;color:#fff;animation:countPop .35s ease}
+@keyframes countPop{0%{transform:scale(2.5);opacity:0}60%{transform:scale(.95)}100%{transform:scale(1);opacity:1}}
+.flash-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:800;pointer-events:none;animation:flashPulse 1.8s ease-out forwards}
+@keyframes flashPulse{0%{opacity:.7}15%{opacity:.2}30%{opacity:.6}50%{opacity:.15}70%{opacity:.4}100%{opacity:0}}
+.flash-green{background:var(--green)}.flash-red{background:var(--red)}
+.tie-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px 24px;text-align:center}
+.tie-title{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;letter-spacing:-2px;color:var(--muted2)}
+.tie-sub{font-size:14px;color:var(--muted2);margin-top:8px}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">☀️</button>
+<canvas id="confetti-canvas"></canvas>
+<div id="countdown-overlay" style="display:none"></div>
+
+<!-- ═══ LANDING ═══ -->
+<div id="s-landing" class="screen active">
+  <div></div>
+  <div class="logo">IMPOSTOR</div>
+  <div class="landing-btns">
+    <div class="mode-lbl">En persona</div>
+    <button class="btn" onclick="L.showSetup()">Jugar local</button>
+    <div class="mode-lbl">Cada uno en su casa</div>
+    <button class="btn btn-ghost" onclick="O.goCreate()">Crear sala online</button>
+    <button class="btn btn-ghost" onclick="O.goJoin()">Unirse a sala</button>
+  </div>
+  <div style="text-align:center"><button onclick="showFeedback()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Figtree',sans-serif;padding:8px">💬 Dar feedback</button></div>
+</div>
+
+<!-- ═══ LOCAL SCREENS ═══ -->
+<div id="s-l-count" class="screen" style="gap:24px;padding-top:max(env(safe-area-inset-top),60px);padding-bottom:max(env(safe-area-inset-bottom),48px)">
+  <div><div class="step-title">¿Cuántos juegan?</div><div class="step-sub">Mínimo 3 jugadores</div></div>
+  <div class="count-picker" id="l-count-picker"></div>
+  <div><div class="lbl">Impostores</div><div class="count-picker" id="l-imp-picker" style="grid-template-columns:repeat(3,1fr)"></div></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto"><button class="btn" onclick="L.goToNames()">Siguiente →</button><button class="btn btn-ghost" onclick="L.quickPlay()">⚡ Partida rápida</button><button class="btn btn-ghost" onclick="showScreen('s-landing')">Volver</button></div>
+</div>
+<div id="s-l-names" class="screen" style="gap:20px;padding-top:max(env(safe-area-inset-top),40px);padding-bottom:max(env(safe-area-inset-bottom),48px)">
+  <div><div class="step-title">Nombres</div><div class="step-sub" id="l-names-sub"></div></div>
+  <div class="player-list" id="l-player-list" style="flex:1;overflow-y:auto"></div>
+  <div style="display:flex;flex-direction:column;gap:8px"><button class="btn" onclick="L.goToCat()">Siguiente →</button><button class="btn btn-ghost" onclick="L.backToCount()">← Volver</button></div>
+</div>
+<div id="s-l-cat" class="screen" style="gap:16px;padding-top:max(env(safe-area-inset-top),40px);padding-bottom:max(env(safe-area-inset-bottom),48px)">
+  <div><div class="step-title">Categoría</div></div>
+  <div class="cats" id="l-cat-list" style="flex:1;overflow-y:auto"></div>
+  <div><div class="lbl">Timer de pistas</div>
+    <div class="timer-setting"><button class="timer-toggle" id="l-timer-toggle" onclick="L.toggleTimer()"></button><div class="timer-desc" id="l-timer-desc">Desactivado</div>
+      <div class="timer-val" id="l-timer-val" style="display:none"><button class="timer-adj" onclick="L.adjTimer(-5)">−</button><div class="timer-secs" id="l-timer-secs">30</div><button class="timer-adj" onclick="L.adjTimer(5)">+</button></div></div></div>
+  <div><div class="lbl">Puntuación</div>
+    <div class="timer-setting"><button class="timer-toggle" id="l-score-toggle" onclick="L.toggleScoreMode()"></button><div class="timer-desc" id="l-score-desc">Simple</div></div></div>
+  <div style="display:flex;flex-direction:column;gap:8px"><button class="btn" onclick="L.startGame()">Empezar</button><button class="btn btn-ghost" onclick="showScreen('s-l-names')">← Volver</button></div>
+</div>
+<button class="home-btn" id="home-btn" style="display:none" onclick="L.goHome()">⌂ Inicio</button>
+<button class="home-btn" id="o-exit-btn" style="display:none;right:auto;left:24px" onclick="O.exitRoom()">✕ Salir</button>
+<div id="s-l-reveal" class="screen screen-reveal"><div class="rev-top"><div class="rev-count" id="l-rev-count"></div><div class="rev-name" id="l-rev-name">—</div></div><div id="l-word-area"></div><div class="rev-footer" id="l-rev-footer"></div></div>
+<div id="s-l-game" class="screen screen-game"><div class="game-top"><div class="game-round" id="l-game-round">Ronda 1</div><button class="vote-quick" onclick="L.goToVote()">Votar</button></div><div class="starter-card"><div class="starter-lbl">Empieza</div><div class="starter-name" id="l-starter-name">—</div><div class="starter-sub">y siguen en orden</div></div><div class="order-card"><div class="order-title">Orden de pistas</div><div id="l-order-list"></div></div><div id="l-timer-area"></div><button class="btn" onclick="L.goToVote()">Listo, votar →</button><button class="btn btn-ghost" onclick="L.repeatRound()">🔄 Otra ronda de pistas</button></div>
+<div id="s-l-vote" class="screen screen-vote"><div class="vote-q">Eliminar a...</div><div class="vote-sub" id="l-vote-sub"></div><div class="vote-list" id="l-vote-list"></div><div class="vote-footer"><button class="btn btn-danger" id="l-btn-acuse" onclick="L.doEliminate()" disabled>Eliminar</button><button class="btn btn-ghost" onclick="showScreen('s-l-game')">Volver</button></div></div>
+<div id="s-l-elim" class="screen screen-elim"><div><div class="elim-verdict" id="l-elim-verdict">—</div><div class="elim-card"><div class="elim-lbl" id="l-elim-lbl">Eliminado</div><div class="elim-name" id="l-elim-name">—</div><div class="elim-sub" id="l-elim-sub"></div></div><div id="l-vote-tally"></div><div class="score-pill"><div class="score-pill-lbl">Puntos del impostor</div><div class="score-pill-num" id="l-elim-score">0</div></div></div><div class="elim-footer" id="l-elim-footer"></div></div>
+<div id="s-l-guess" class="screen screen-guess"><div><div class="guess-title" id="l-guess-title">¿Adivinó?</div><div class="guess-sub" id="l-guess-sub"></div></div><div class="guess-card" id="l-guess-card"></div><div class="guess-footer" id="l-guess-footer"></div></div>
+<div id="s-l-result" class="screen screen-result"><div class="verdict" id="l-verdict">—</div><div class="res-card"><div class="res-lbl" id="l-res-lbl">El impostor era</div><div class="res-name" id="l-res-name">—</div><div class="res-info" id="l-res-info"></div></div><div id="l-result-extra"></div><div class="res-btns"><button class="btn" onclick="L.playAgain()">Jugar de nuevo</button><button class="btn btn-ghost" onclick="L.changeCat()">Cambiar categoría</button><button class="btn btn-ghost" onclick="L.showScores()">Tabla →</button><button class="btn btn-ghost" onclick="L.showHistory()">Historial →</button></div></div>
+<div id="s-l-catpick" class="screen screen-catpick"><div class="catpick-title">Categoría</div><div class="catpick-cats" id="l-catpick-list"></div><button class="btn btn-ghost" style="margin-top:12px" onclick="showScreen('s-l-result')">Cancelar</button></div>
+<div id="s-l-custom-cat" class="screen" style="gap:16px;padding-top:max(env(safe-area-inset-top),40px);padding-bottom:max(env(safe-area-inset-bottom),48px)">
+  <div><div class="step-title">Crear categoría</div><div class="step-sub">Mínimo 10 palabras</div></div>
+  <div class="custom-cat-form">
+    <div><div class="lbl">Nombre</div><input class="inp" id="cc-name" placeholder="Ej: Compañeros del laburo" maxlength="30" autocomplete="off"></div>
+    <div><div class="lbl">Agregar palabras</div>
+      <div style="display:flex;gap:8px"><input class="inp" id="cc-word" placeholder="Escribí una palabra" maxlength="40" autocomplete="off" style="flex:1"><button class="btn btn-sm" style="width:auto;padding:10px 16px" onclick="addCustomWord()">+</button></div>
+    </div>
+    <div class="word-chips" id="cc-chips"></div>
+    <div style="font-size:13px;color:var(--muted2)" id="cc-count">0 palabras</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto"><button class="btn" onclick="saveCustomCat()">Guardar</button><button class="btn btn-ghost" id="cc-back-btn" onclick="showScreen('s-l-cat')">← Volver</button></div>
+</div>
+<div id="s-cloud" class="screen" style="gap:20px;padding-top:max(env(safe-area-inset-top),40px);padding-bottom:max(env(safe-area-inset-bottom),48px)">
+  <div><div class="step-title">Mis listas en la nube</div><div class="step-sub">Guardá tus categorías custom para recuperarlas en cualquier dispositivo</div></div>
+  <div class="custom-cat-form">
+    <div><div class="lbl">Nickname</div><input class="inp" id="cloud-nick" placeholder="Tu apodo" maxlength="20" autocomplete="off"></div>
+    <div><div class="lbl">PIN (4 dígitos)</div><input class="inp" id="cloud-pin" placeholder="1234" maxlength="4" inputmode="numeric" autocomplete="off" style="max-width:120px"></div>
+  </div>
+  <div id="cloud-status"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
+    <button class="btn" onclick="cloudSave()">☁️ Subir mis listas</button>
+    <button class="btn btn-ghost" onclick="cloudLoad()">📥 Recuperar listas</button>
+    <button class="btn btn-ghost" id="cloud-back-btn" onclick="showScreen('s-l-cat')">← Volver</button>
+  </div>
+</div>
+<div id="s-l-scores" class="screen screen-scores"><div class="scores-header"><div class="scores-title">Tabla <button class="score-info-btn" onclick="toggleScoreInfo()">?</button></div><button class="btn btn-ghost btn-sm" onclick="showScreen('s-l-result')">Volver</button></div><div id="score-info-anchor-l"></div><div class="scores-list" id="l-scores-list"></div><div class="scores-footer"><button class="btn" onclick="L.playAgain()">Jugar de nuevo</button><button class="btn btn-ghost" onclick="L.changeCat()">Cambiar categoría</button></div></div>
+<div id="s-l-history" class="screen" style="gap:0;padding-top:max(env(safe-area-inset-top),24px);padding-bottom:max(env(safe-area-inset-bottom),80px)"><div class="scores-header"><div class="scores-title">Historial</div><button class="btn btn-ghost btn-sm" onclick="showScreen('s-l-result')">Volver</button></div><div id="l-history-list" style="flex:1;overflow-y:auto"></div></div>
+
+<!-- ═══ ONLINE SCREENS ═══ -->
+<div id="s-o-join" class="screen" style="gap:24px;padding-top:max(env(safe-area-inset-top),60px)"><div class="join-title" id="o-join-title">Unirse</div><div class="join-form"><div id="o-code-field"><div class="lbl">Código de sala</div><input class="code-input" id="o-inp-code" placeholder="ABCD1" maxlength="5" autocomplete="off" autocapitalize="characters"></div><div id="o-name-field"><div class="lbl">Tu nombre</div><input class="inp" id="o-inp-name" placeholder="Nombre" maxlength="16" autocomplete="off"></div></div><div class="join-footer"><button class="btn" id="o-btn-join" onclick="O.doJoinOrCreate()">Unirse</button><button class="btn btn-ghost" onclick="showScreen('s-landing')">Volver</button></div></div>
+<div id="s-o-rejoin" class="screen" style="gap:24px;padding-top:max(env(safe-area-inset-top),60px)"><div class="join-title">Volver a la partida</div><div class="step-sub">Tocá tu nombre para reconectarte</div><div class="lobby-players" id="o-rejoin-list" style="flex:1;overflow-y:auto"></div><div class="join-footer"><button class="btn btn-ghost" onclick="showScreen('s-landing')">Cancelar</button></div></div>
+<div id="s-o-lobby" class="screen" style="gap:0;padding-top:max(env(safe-area-inset-top),24px)"><div class="lobby-scroll"><div class="room-code-card"><div class="room-code-lbl">Código de sala</div><div class="room-code" id="o-lobby-code">—</div><div class="room-code-share" onclick="O.shareCode()">Tocar para compartir link</div></div><div><div class="lbl">Jugadores</div><div class="lobby-players" id="o-lobby-players"></div></div><div id="o-lobby-settings"></div></div><div class="lobby-footer" id="o-lobby-footer"></div></div>
+<div id="s-o-catpick" class="screen screen-catpick"><div class="catpick-title">Categoría</div><div class="catpick-cats" id="o-catpick-list"></div><button class="btn btn-ghost" style="margin-top:12px" onclick="showScreen('s-o-lobby')">Cancelar</button></div>
+<div id="s-o-reveal" class="screen screen-reveal"><div class="rev-top"><div class="rev-count" id="o-rev-count"></div><div class="rev-name" id="o-rev-name">Tu palabra</div></div><div id="o-rev-area"></div><div class="rev-footer" id="o-rev-footer"></div></div>
+<div id="s-o-round" class="screen screen-game"><div class="game-top"><div class="game-round" id="o-round-lbl">Ronda 1</div><div class="game-cat" id="o-round-cat"></div></div><div id="o-clue-area"></div></div>
+<div id="s-o-vote" class="screen screen-vote"><div class="vote-q">Eliminar a...</div><div class="vote-sub" id="o-vote-sub"></div><div id="o-vote-area"></div><div class="vote-footer" id="o-vote-footer"></div></div>
+<div id="s-o-elim" class="screen screen-elim"><div><div class="elim-verdict" id="o-elim-verdict">—</div><div class="elim-card"><div class="elim-lbl" id="o-elim-lbl">Eliminado</div><div class="elim-name" id="o-elim-name">—</div><div class="elim-sub" id="o-elim-sub"></div></div><div id="o-vote-tally"></div><div class="score-pill"><div class="score-pill-lbl">Puntos del impostor</div><div class="score-pill-num" id="o-elim-score">0</div></div></div><div class="elim-footer" id="o-elim-footer"></div></div>
+<div id="s-o-guess" class="screen screen-guess"><div><div class="guess-title" id="o-guess-title">Última chance</div><div class="guess-sub" id="o-guess-sub"></div></div><div class="guess-card" id="o-guess-card"></div><div class="guess-footer" id="o-guess-footer"></div></div>
+<div id="s-o-result" class="screen screen-result"><div class="verdict" id="o-verdict">—</div><div class="res-card"><div class="res-lbl" id="o-res-lbl">El impostor era</div><div class="res-name" id="o-res-name">—</div><div class="res-info" id="o-res-info"></div></div><div id="o-result-extra"></div><div class="res-btns" id="o-res-btns"></div></div>
+<div id="s-o-scores" class="screen screen-scores"><div class="scores-header"><div class="scores-title">Tabla <button class="score-info-btn" onclick="toggleScoreInfo()">?</button></div><button class="btn btn-ghost btn-sm" onclick="showScreen('s-o-result')">Volver</button></div><div id="score-info-anchor-o"></div><div class="scores-list" id="o-scores-list"></div><div class="scores-footer" id="o-scores-footer"></div></div>
+
+<script>
+/* ═══ FIREBASE ═══ */
+firebase.initializeApp({apiKey:"AIzaSyAU9qh2onnEvsau2MnpEQakq7G8nBxkjJ4",authDomain:"corillo-impostor.firebaseapp.com",databaseURL:"https://corillo-impostor-default-rtdb.firebaseio.com",projectId:"corillo-impostor",storageBucket:"corillo-impostor.firebasestorage.app",messagingSenderId:"705169635872",appId:"1:705169635872:web:a32082f9b55676e0f7da45"});
+const db=firebase.database();
+const storage=firebase.storage();
+
+/* ═══ CATEGORIES ═══ */
+const CAT_GROUPS=[
+  {label:"⚽ Fútbol",cats:["Jugadores históricos","Jugadores argentinos","Jugadores actuales","Equipos de fútbol","DTs históricos"]},
+  {label:"📦 Otros",cats:["Películas","Países","Comidas","Músicos latinos","Animales","Ciudades"]},
+  {label:"👦 Para chicos",cats:["Jugadores conocidos","Equipos famosos","DTs conocidos"]},
+];
+const ALL_CATS=CAT_GROUPS.flatMap(g=>g.cats);
+const CATS={
+  "Jugadores históricos":["Pelé","Diego Maradona","Johan Cruyff","Zinedine Zidane","Ronaldo Nazário","Ronaldinho","Paolo Maldini","Michel Platini","Alfredo Di Stéfano","Romário","Rivaldo","Dennis Bergkamp","Roberto Baggio","Luís Figo","Thierry Henry","Raúl González","Andrea Pirlo","Xavi Hernández","Andrés Iniesta","Steven Gerrard","Gianluigi Buffon","Kaká","Francesco Totti","Eric Cantona","Clarence Seedorf","David Beckham","Paul Scholes","Frank Lampard","Alessandro Nesta","Carles Puyol","Davor Suker","Didier Drogba","Samuel Eto'o","Roberto Carlos","Andriy Shevchenko"],
+  "Jugadores argentinos":["Lionel Messi","Ángel Di María","Diego Maradona","Román Riquelme","Gabriel Batistuta","Sergio Agüero","Carlos Tevez","Javier Zanetti","Fernando Redondo","Mario Kempes","Hernán Crespo","Claudio Caniggia","Daniel Passarella","Diego Simeone","Pablo Aimar","Javier Saviola","Ariel Ortega","Ezequiel Lavezzi","Javier Mascherano","Sebastián Verón","Gonzalo Higuaín","Esteban Cambiasso","Juan Pablo Sorín","Marcelo Gallardo","Martín Palermo","Lautaro Martínez","Enzo Fernández","Julián Álvarez","Alejandro Garnacho","Alexis Mac Allister","Dibu Martínez","Gonzalo Montiel","Cuti Romero","Rodrigo De Paul","Paulo Dybala","Mauro Icardi","Oscar Ruggeri","Matías Almeyda"],
+  "Jugadores actuales":["Lionel Messi","Kylian Mbappé","Erling Haaland","Vinicius Jr.","Jude Bellingham","Kevin De Bruyne","Mohamed Salah","Luka Modric","Rodri","Lautaro Martínez","Pedri","Fede Valverde","Julián Álvarez","Heung-Min Son","Harry Kane","Robert Lewandowski","Antoine Griezmann","Paulo Dybala","Enzo Fernández","Dibu Martínez","Virgil van Dijk","Bernardo Silva","Alisson Becker","Rodrigo De Paul","Lamine Yamal","Thibaut Courtois","Cole Palmer","Phil Foden","Raphinha","Alexis Mac Allister","Alejandro Garnacho","Aurélien Tchouaméni","Darwin Núñez","Luis Díaz"],
+  "Equipos de fútbol":["Boca","River","Real Madrid","Barcelona","Manchester United","Liverpool","Bayern Munich","Juventus","Milan","Inter","PSG","Santos","Flamengo","Chelsea","Manchester City","Atlético de Madrid","Ajax","Benfica","Porto","Napoli","Borussia Dortmund","Tottenham","Arsenal","Roma","Peñarol","Racing","Independiente","San Lorenzo","Vélez","Palmeiras","Corinthians","Gremio","Nacional","Olimpia","Colo Colo","Lazio","Fiorentina","Valencia","Sevilla"],
+  "DTs históricos":["Alex Ferguson","Pep Guardiola","Marcelo Bielsa","César Menotti","Carlos Bilardo","José Mourinho","Johan Cruyff","Carlo Ancelotti","Jürgen Klopp","Alejandro Sabella","Lionel Scaloni","Marcelo Gallardo","Diego Simeone","Arsène Wenger","Vicente Del Bosque","Óscar Tabárez","Zinedine Zidane","Luis Enrique","Louis Van Gaal","Mauricio Pochettino","Jorge Sampaoli","José Pékerman","Carlos Bianchi","Ramón Díaz","Alfio Basile","Thomas Tuchel","Ricardo Gareca","Eduardo Coudet"],
+  "Películas":["Titanic","Avatar","Inception","Matrix","Joker","Interstellar","Avengers","Batman","Toy Story","Shrek","Frozen","Coco","Gladiador","El Padrino","Pulp Fiction","Forrest Gump","Jurassic Park","Star Wars","Rocky","Tiburón","ET","Volver al Futuro","El Rey León","Indiana Jones","Harry Potter","El Secreto de sus Ojos","Relatos Salvajes","Nueve Reinas","Up","Buscando a Nemo","Rápido y Furioso","Terminator","Piratas del Caribe","El Señor de los Anillos","Spider-Man","Iron Man","Misión Imposible","Kill Bill"],
+  "Países":["Argentina","Brasil","Francia","España","Alemania","Italia","México","Colombia","Chile","Uruguay","Portugal","Inglaterra","Japón","Australia","Canadá","Estados Unidos","Perú","Ecuador","Suiza","Holanda","Rusia","China","India","Egipto","Sudáfrica","Grecia","Israel","Bolivia","Venezuela","Corea del Sur","Cuba","Panamá","Costa Rica","Paraguay","Marruecos","Turquía","Tailandia","Vietnam","Indonesia","Noruega","Suecia","Dinamarca","Irlanda","Croacia","República Dominicana","Filipinas","Nigeria","Kenia","Nueva Zelanda","Arabia Saudita"],
+  "Comidas":["Pizza","Asado","Sushi","Pasta","Milanesa","Empanada","Hamburguesa","Tacos","Ramen","Paella","Humita","Locro","Alfajor","Medialunas","Choripán","Ceviche","Falafel","Lasagna","Ravioles","Churrasco","Tortilla","Poke","Croissant","Tiramisú","Dulce de leche","Provoleta","Panqueques","Helado","Nachos","Guacamole","Risotto","Wok"],
+  "Músicos latinos":["Shakira","Bad Bunny","J Balvin","Maluma","Karol G","Rosalía","Daddy Yankee","Ozuna","Bizarrap","Trueno","Duki","WOS","Nicki Nicole","Tini","María Becerra","Anuel AA","Rauw Alejandro","Feid","Peso Pluma","Myke Towers","Paulo Londra","Becky G","Nathy Peluso","Residente","Don Omar","Emilia","Wisin","Pitbull","Juanes","Sebastián Yatra"],
+  "Animales":["León","Tigre","Elefante","Delfín","Pingüino","Cocodrilo","Oso","Lobo","Águila","Tiburón","Serpiente","Cebra","Jirafa","Panda","Canguro","Gorila","Rinoceronte","Ballena","Pulpo","Halcón","Jaguar","Tortuga","Hipopótamo","Búho","Flamenco","Loro","Mono","Caballo","Vaca","Gato","Perro","Conejo","Rata","Iguana","Abeja","Mariposa"],
+  "Ciudades":["Buenos Aires","Miami","Madrid","Barcelona","París","Roma","Nueva York","Londres","Tokio","Dubai","Sydney","Río de Janeiro","Ciudad de México","Bogotá","Santiago","Berlín","Ámsterdam","Estambul","Bangkok","Montevideo","Lima","Los Ángeles","Toronto","Moscú","Singapur","Medellín","La Habana","Cancún","Chicago","Las Vegas","Atenas","Hong Kong","Florencia","Zúrich"],
+  "Jugadores conocidos":["Lionel Messi","Kylian Mbappé","Erling Haaland","Cristiano Ronaldo","Neymar","Vinicius Jr.","Jude Bellingham","Lautaro Martínez","Julián Álvarez","Enzo Fernández","Dibu Martínez","Paulo Dybala","Alejandro Garnacho","Alexis Mac Allister","Rodrigo De Paul","Cuti Romero","Lamine Yamal","Cole Palmer","Phil Foden","Mohamed Salah","Kevin De Bruyne","Robert Lewandowski","Pedri","Darwin Núñez","Luis Díaz","Ronaldinho","Diego Maradona","Pelé","Zinedine Zidane","David Beckham"],
+  "Equipos famosos":["Boca","River","Real Madrid","Barcelona","Manchester United","Liverpool","Bayern Munich","Juventus","Milan","Inter","PSG","Chelsea","Manchester City","Atlético de Madrid","Borussia Dortmund","Tottenham","Arsenal","Flamengo","Napoli","Ajax"],
+  "DTs conocidos":["Pep Guardiola","Lionel Scaloni","Diego Simeone","Marcelo Gallardo","Carlo Ancelotti","Jürgen Klopp","José Mourinho","Marcelo Bielsa"],
+};
+
+// Merged group categories (deduplicated)
+CAT_GROUPS.forEach(g=>{
+  const key='🎲 '+g.label;
+  CATS[key]=[...new Set(g.cats.flatMap(c=>CATS[c]))];
+});
+// Azar total: ALL categories merged
+CATS['🎲 TODO al azar']=[...new Set(Object.keys(CATS).filter(k=>!k.startsWith('🎲')).flatMap(k=>CATS[k]))];
+
+/* ═══ UTILS ═══ */
+/* Theme */
+function toggleTheme(){const r=document.documentElement;r.classList.toggle('light');const isLight=r.classList.contains('light');
+  document.getElementById('theme-toggle').textContent=isLight?'🌙':'☀️';
+  document.querySelector('meta[name="theme-color"]').content=isLight?'#f5f3ef':'#111110';
+  try{localStorage.setItem('imp_theme',isLight?'light':'dark')}catch(e){}}
+(function(){try{const t=localStorage.getItem('imp_theme');if(t==='light'){document.documentElement.classList.add('light');document.getElementById('theme-toggle').textContent='🌙';document.querySelector('meta[name="theme-color"]').content='#f5f3ef'}}catch(e){}})();
+
+/* Confetti */
+function fireConfetti(){
+  const canvas=document.getElementById('confetti-canvas');const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const colors=['#e84040','#34c759','#f0ede8','#ffcc00','#ff6b6b','#4ecdc4','#45b7d1','#f7dc6f'];
+  const pieces=[];for(let i=0;i<120;i++){pieces.push({x:canvas.width*Math.random(),y:-20-Math.random()*canvas.height*.4,
+    w:4+Math.random()*6,h:8+Math.random()*10,r:Math.random()*Math.PI*2,dr:(Math.random()-.5)*.12,
+    vx:(Math.random()-.5)*4,vy:2+Math.random()*4,c:colors[Math.floor(Math.random()*colors.length)],o:1})}
+  let frame=0;const maxFrames=180;
+  function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.r+=p.dr;
+      if(frame>maxFrames*.6)p.o=Math.max(0,p.o-.015);
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.globalAlpha=p.o;ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()});
+    frame++;if(frame<maxFrames)requestAnimationFrame(draw);else ctx.clearRect(0,0,canvas.width,canvas.height)}
+  draw();
+}
+
+/* Custom categories */
+let customCats={};let ccWords=[];let ccBackTarget='s-l-cat';
+try{const s=localStorage.getItem('imp_custom_cats');if(s)customCats=JSON.parse(s)}catch(e){}
+function syncCustomCats(){Object.keys(customCats).forEach(name=>{CATS[name]=customCats[name];if(!ALL_CATS.includes(name))ALL_CATS.push(name)});
+  // ensure CAT_GROUPS has custom group
+  let cg=CAT_GROUPS.find(g=>g.label==='✏️ Custom');
+  if(!cg){cg={label:'✏️ Custom',cats:[]};CAT_GROUPS.push(cg)}
+  cg.cats=Object.keys(customCats);
+}
+syncCustomCats();
+function openCustomCat(backScreen){ccBackTarget=backScreen||'s-l-cat';ccWords=[];document.getElementById('cc-name').value='';document.getElementById('cc-word').value='';renderChips();
+  document.getElementById('cc-back-btn').onclick=()=>showScreen(ccBackTarget);showScreen('s-l-custom-cat');
+  setTimeout(()=>document.getElementById('cc-name').focus(),100)}
+function addCustomWord(){const inp=document.getElementById('cc-word');const w=inp.value.trim();if(!w)return;if(!ccWords.includes(w))ccWords.push(w);inp.value='';renderChips();inp.focus()}
+function removeCustomWord(i){ccWords.splice(i,1);renderChips()}
+function renderChips(){const c=document.getElementById('cc-chips');c.innerHTML='';
+  ccWords.forEach((w,i)=>{const el=document.createElement('div');el.className='word-chip';el.innerHTML=w+'<button class="word-chip-x" onclick="removeCustomWord('+i+')">×</button>';c.appendChild(el)});
+  document.getElementById('cc-count').textContent=ccWords.length+' palabra'+(ccWords.length!==1?'s':'');
+}
+function saveCustomCat(){const name=document.getElementById('cc-name').value.trim();
+  if(!name){alert('Ponele un nombre a la categoría');return}
+  if(ccWords.length<10){alert('Necesitás mínimo 10 palabras (tenés '+ccWords.length+')');return}
+  customCats[name]=[...ccWords];CATS[name]=customCats[name];
+  if(!ALL_CATS.includes(name))ALL_CATS.push(name);syncCustomCats();
+  try{localStorage.setItem('imp_custom_cats',JSON.stringify(customCats))}catch(e){}
+  showScreen(ccBackTarget);
+}
+// Cloud save/load
+let cloudBackTarget='s-l-cat';
+function openCloud(backScreen){
+  cloudBackTarget=backScreen||'s-l-cat';
+  document.getElementById('cloud-back-btn').onclick=()=>showScreen(cloudBackTarget);
+  document.getElementById('cloud-status').innerHTML='';
+  // Pre-fill nickname if saved
+  try{const n=localStorage.getItem('imp_cloud_nick');if(n)document.getElementById('cloud-nick').value=n}catch(e){}
+  showScreen('s-cloud');
+}
+async function cloudSave(){
+  const nick=document.getElementById('cloud-nick').value.trim().toLowerCase();
+  const pin=document.getElementById('cloud-pin').value.trim();
+  const status=document.getElementById('cloud-status');
+  if(!nick||nick.length<2){status.innerHTML='<div style="color:var(--red);font-size:13px">Nickname mínimo 2 caracteres</div>';return}
+  if(!pin||pin.length!==4||!/^\d{4}$/.test(pin)){status.innerHTML='<div style="color:var(--red);font-size:13px">PIN debe ser 4 dígitos</div>';return}
+  if(Object.keys(customCats).length===0){status.innerHTML='<div style="color:var(--red);font-size:13px">No tenés categorías custom para guardar</div>';return}
+  status.innerHTML='<div style="color:var(--muted);font-size:13px">Guardando...</div>';
+  try{
+    const ref=db.ref('userCats/'+nick);
+    const snap=await ref.once('value');
+    const existing=snap.val();
+    // If exists, check PIN matches
+    if(existing&&existing.pin!==pin){status.innerHTML='<div style="color:var(--red);font-size:13px">PIN incorrecto para ese nickname</div>';return}
+    await ref.set({pin,cats:customCats,ts:Date.now()});
+    try{localStorage.setItem('imp_cloud_nick',nick)}catch(e){}
+    status.innerHTML='<div style="color:var(--fg);font-size:13px">✓ '+Object.keys(customCats).length+' categoría'+(Object.keys(customCats).length>1?'s':'')+' guardada'+(Object.keys(customCats).length>1?'s':'')+'</div>';
+  }catch(e){status.innerHTML='<div style="color:var(--red);font-size:13px">Error al guardar</div>'}
+}
+async function cloudLoad(){
+  const nick=document.getElementById('cloud-nick').value.trim().toLowerCase();
+  const pin=document.getElementById('cloud-pin').value.trim();
+  const status=document.getElementById('cloud-status');
+  if(!nick||nick.length<2){status.innerHTML='<div style="color:var(--red);font-size:13px">Nickname mínimo 2 caracteres</div>';return}
+  if(!pin||pin.length!==4||!/^\d{4}$/.test(pin)){status.innerHTML='<div style="color:var(--red);font-size:13px">PIN debe ser 4 dígitos</div>';return}
+  status.innerHTML='<div style="color:var(--muted);font-size:13px">Buscando...</div>';
+  try{
+    const snap=await db.ref('userCats/'+nick).once('value');
+    const data=snap.val();
+    if(!data){status.innerHTML='<div style="color:var(--red);font-size:13px">No se encontró ese nickname</div>';return}
+    if(data.pin!==pin){status.innerHTML='<div style="color:var(--red);font-size:13px">PIN incorrecto</div>';return}
+    const cats=data.cats||{};
+    const count=Object.keys(cats).length;
+    if(count===0){status.innerHTML='<div style="color:var(--muted);font-size:13px">No hay categorías guardadas</div>';return}
+    // Merge with existing
+    Object.assign(customCats,cats);
+    try{localStorage.setItem('imp_custom_cats',JSON.stringify(customCats));localStorage.setItem('imp_cloud_nick',nick)}catch(e){}
+    syncCustomCats();
+    status.innerHTML='<div style="color:var(--fg);font-size:13px">✓ '+count+' categoría'+(count>1?'s':'')+' recuperada'+(count>1?'s':'')+'</div>';
+  }catch(e){status.innerHTML='<div style="color:var(--red);font-size:13px">Error al recuperar</div>'}
+}
+// Enter key for word input
+document.getElementById('cc-word').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addCustomWord()}});
+
+function secureRandInt(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function securePick(arr){return arr[secureRandInt(arr.length)]}
+function genCode(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=c[secureRandInt(c.length)];return s}
+function playBeep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.18,.36].forEach(d=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;o.type='square';g.gain.value=.15;o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.12)})}catch(e){}}
+function vibrate(ms){try{navigator.vibrate&&navigator.vibrate(ms||200)}catch(e){}}
+function showCountdown(cb){const ov=document.getElementById('countdown-overlay');ov.style.display='flex';ov.className='countdown-overlay';let n=3;ov.innerHTML='<div class="countdown-num">'+n+'</div>';const iv=setInterval(()=>{n--;if(n>0){ov.innerHTML='<div class="countdown-num">'+n+'</div>'}else{clearInterval(iv);ov.style.display='none';if(cb)cb()}},700)}
+function flashScreen(color){vibrate([100,50,100,50,200]);const el=document.createElement('div');el.className='flash-overlay flash-'+color;document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove())}
+function normalizeWord(w){return w.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ')}
+function levenshtein(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i===0?j:0}for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[m][n]}
+function wordsMatch(guess,word){const a=normalizeWord(guess),b=normalizeWord(word);if(a===b)return true;if(levenshtein(a,b)<=2)return true;if(a.length<3)return false;
+  // Partial match: check if guess matches any part of the word (e.g. "haaland" matches "erling haaland")
+  const parts=b.split(' ');const gparts=a.split(' ');
+  // Single word guess vs multi-word name: match any part >2 chars
+  if(gparts.length===1&&parts.length>1){for(const p of parts){if(p.length>2&&levenshtein(a,p)<=1)return true}}
+  // Multi-word guess: check contiguous substrings of parts (e.g. "de paul" vs "rodrigo de paul")
+  if(gparts.length>=1&&parts.length>1){for(let i=0;i<=parts.length-gparts.length;i++){const sub=parts.slice(i,i+gparts.length).join(' ');if(levenshtein(a,sub)<=2)return true}}
+  // Without spaces
+  const aj=a.replace(/ /g,''),bj=b.replace(/ /g,'');if(levenshtein(aj,bj)<=2)return true;
+  return false}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+function getImpCount(n){return n>=7?2:1}
+function buildCatList(container,selected,onSelect,backScreen){
+  container.innerHTML='';
+  showCatGroups(container,selected,onSelect,backScreen);
+}
+function showCatGroups(container,selected,onSelect,backScreen){
+  container.innerHTML='';
+  // TODO al azar — skips step 2
+  const hi=b=>{container.querySelectorAll('.cat').forEach(x=>x.classList.remove('on'));b.classList.add('on')};
+  const rb=document.createElement('button');rb.className='cat cat-random';rb.textContent='🎲 TODO al azar';
+  rb.onclick=()=>{hi(rb);onSelect('🎲 TODO al azar')};
+  container.appendChild(rb);
+  // Group buttons
+  CAT_GROUPS.forEach(g=>{
+    if(g.cats.length===0)return;
+    const b=document.createElement('button');b.className='cat';b.textContent=g.label;b.style.fontSize='15px';
+    b.onclick=()=>showCatDetail(container,g,selected,onSelect,backScreen);
+    container.appendChild(b);
+  });
+  // Custom cats
+  const kidCats=['Jugadores conocidos','Equipos famosos','DTs conocidos'];
+  const customs=Object.keys(CATS).filter(k=>!ALL_CATS.includes(k)&&!k.startsWith('🎲')&&!kidCats.includes(k));
+  if(customs.length){
+    const h=document.createElement('div');h.className='cat-group-lbl';h.textContent='Tus categorías';container.appendChild(h);
+    customs.forEach(c=>{const b=document.createElement('button');b.className='cat'+(selected===c?' on':'');b.textContent=c;
+      b.onclick=()=>{hi(b);onSelect(c)};container.appendChild(b)});
+  }
+  // Create custom
+  const cb=document.createElement('button');cb.className='cat';cb.textContent='✏️ Crear categoría...';cb.style.color='var(--fg)';
+  cb.onclick=()=>openCustomCat(backScreen||'s-l-cat');
+  container.appendChild(cb);
+  // Cloud backup
+  const cl=document.createElement('button');cl.className='cat';cl.textContent='☁️ Mis listas en la nube';cl.style.color='var(--muted2)';cl.style.fontSize='13px';
+  cl.onclick=()=>openCloud(backScreen||'s-l-cat');
+  container.appendChild(cl);
+}
+function showCatDetail(container,group,selected,onSelect,backScreen){
+  container.innerHTML='';
+  const hi=b=>{container.querySelectorAll('.cat').forEach(x=>x.classList.remove('on'));b.classList.add('on')};
+  // Back button
+  const bk=document.createElement('button');bk.className='cat';bk.style.color='var(--muted)';bk.textContent='← Volver';
+  bk.onclick=()=>showCatGroups(container,selected,onSelect,backScreen);
+  container.appendChild(bk);
+  // Group random
+  const grKey='🎲 '+group.label;
+  const gr=document.createElement('button');gr.className='cat cat-random';gr.textContent=group.label+' al azar';
+  gr.onclick=()=>{hi(gr);onSelect(grKey)};
+  container.appendChild(gr);
+  // Individual categories
+  group.cats.forEach(c=>{const b=document.createElement('button');b.className='cat'+(selected===c?' on':'');b.textContent=c;
+    b.onclick=()=>{hi(b);onSelect(c)};container.appendChild(b)});
+}
+function buildVoteTally(votes,players){
+  // votes: {voterName: targetName, ...}
+  let html='<div class="vote-tally"><div class="lbl" style="margin-bottom:8px">Votos</div>';
+  Object.entries(votes).forEach(([voter,target])=>{html+=`<div class="vote-tally-row"><div class="vote-tally-name">${voter}</div><div class="vote-tally-target">→ ${target}</div></div>`});
+  return html+'</div>';
+}
+function hasDuplicateNames(names){const clean=names.map(n=>n.trim().toLowerCase()).filter(n=>n);return new Set(clean).size!==clean.length}
+function scoringInfoHtml(){return '<div class="score-info-box"><strong>Modo Simple:</strong><br>Impostor suma 1 punto si gana (no lo atrapan o adivina la palabra).<br>Cada jugador suma 1 punto si atrapan al impostor y no adivina.<br><br><strong>Modo Extreme:</strong><br>+1 pt impostor por cada inocente eliminado.<br>+1 pt impostor si gana.<br>+1 pt jugadores si el impostor no adivina.</div>'}
+function toggleScoreInfo(){document.querySelectorAll('.screen.active .score-info-box').forEach(b=>b.classList.toggle('open'))}
+function showFeedback(){
+  const ov=document.createElement('div');ov.className='fb-overlay';ov.id='fb-overlay';
+  ov.innerHTML=`<div class="fb-box"><div class="fb-title">Feedback</div><textarea class="fb-textarea" id="fb-text" placeholder="¿Qué mejorarías? ¿Encontraste algún bug?"></textarea><div class="fb-btns"><button class="btn btn-ghost" onclick="closeFeedback()">Cancelar</button><button class="btn" onclick="sendFeedback()">Enviar</button></div></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('fb-text').focus();
+}
+function closeFeedback(){const ov=document.getElementById('fb-overlay');if(ov)ov.remove()}
+function sendFeedback(){
+  const text=document.getElementById('fb-text').value.trim();if(!text)return;
+  db.ref('feedback').push({text,ts:Date.now()});
+  closeFeedback();
+  // Small thank you
+  const ty=document.createElement('div');ty.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);color:var(--fg);padding:12px 20px;border-radius:12px;font-size:14px;z-index:500;font-family:Figtree,sans-serif';
+  ty.textContent='¡Gracias por tu feedback!';document.body.appendChild(ty);setTimeout(()=>ty.remove(),2500);
+}
+
+/* ═══ LOCAL MODE ═══ */
+const L = (function(){
+  let playerCount=4,impCount=1,players=[];
+  let cat='',word='',impIdxs=[],round=1,impPts=0;
+  let scoreMode='simple'; // 'simple' or 'extreme'
+  let active=[],revealIdx=0,timerEnabled=false,timerSecs=30;
+  let timerInterval=null,timerRemaining=0,selectedVote=-1;
+  let scores={},lastVotes={},history=[];
+
+  function showSetup(){document.getElementById('home-btn').style.display='none';renderCount();showScreen('s-l-count')}
+  function renderCount(){
+    const p=document.getElementById('l-count-picker');p.innerHTML='';
+    for(let n=3;n<=12;n++){const b=document.createElement('button');b.className='count-btn'+(n===playerCount?' on':'');b.textContent=n;b.onclick=()=>{playerCount=n;if(impCount>=playerCount-1)impCount=Math.max(1,playerCount-2);renderCount()};p.appendChild(b)}
+    const ip=document.getElementById('l-imp-picker');ip.innerHTML='';
+    const maxImp=Math.max(1,playerCount-2);
+    for(let n=1;n<=Math.min(maxImp,3);n++){const b=document.createElement('button');b.className='count-btn'+(n===impCount?' on':'');b.textContent=n;b.onclick=()=>{impCount=n;renderCount()};ip.appendChild(b)}
+  }
+  function goToNames(){
+    const old=players.slice();players=[];
+    for(let i=0;i<playerCount;i++)players.push({name:old[i]?old[i].name:''});
+    renderPlayers();showScreen('s-l-names');
+    setTimeout(()=>{const inps=document.querySelectorAll('#l-player-list .inp');for(const inp of inps){if(!inp.value){inp.focus();break}}},100);
+  }
+  function backToCount(){renderCount();showScreen('s-l-count')}
+  function renderPlayers(){
+    const sub=document.getElementById('l-names-sub');
+    sub.textContent=playerCount+' jugadores · '+impCount+' impostor'+(impCount>1?'es':'');
+    const pl=document.getElementById('l-player-list');pl.innerHTML='';
+    players.forEach((p,i)=>{
+      const r=document.createElement('div');r.className='player-row';
+      r.innerHTML=`<div class="player-n">${i+1}</div><input class="inp" value="${p.name}" placeholder="Jugador ${i+1}" maxlength="16" oninput="L.setName(${i},this.value)">`;
+      const inp=r.querySelector('input');
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const nxt=pl.querySelectorAll('.inp')[i+1];if(nxt)nxt.focus();else L.goToCat()}});
+      pl.appendChild(r);
+    });
+  }
+  function setName(i,v){players[i].name=v}
+  function goToCat(){
+    // Auto-fill empty names
+    players.forEach((p,i)=>{if(!p.name.trim())p.name='Jugador '+(i+1)});
+    renderPlayers();
+    const names=players.map(p=>p.name.trim()).filter(n=>n);
+    if(hasDuplicateNames(names)){alert('Hay nombres repetidos');return}
+    renderCats();renderTimer();renderScoreMode();showScreen('s-l-cat');
+  }
+  function renderCats(){buildCatList(document.getElementById('l-cat-list'),cat,c=>{cat=c},'s-l-cat')}
+  function renderTimer(){
+    const t=document.getElementById('l-timer-toggle'),d=document.getElementById('l-timer-desc'),v=document.getElementById('l-timer-val'),s=document.getElementById('l-timer-secs');
+    t.className='timer-toggle'+(timerEnabled?' on':'');d.textContent=timerEnabled?timerSecs+'s por turno':'Desactivado';
+    v.style.display=timerEnabled?'flex':'none';s.textContent=timerSecs;
+  }
+  function toggleScoreMode(){scoreMode=scoreMode==='simple'?'extreme':'simple';renderScoreMode()}
+  function renderScoreMode(){
+    const t=document.getElementById('l-score-toggle'),d=document.getElementById('l-score-desc');
+    t.className='timer-toggle'+(scoreMode==='extreme'?' on':'');
+    d.textContent=scoreMode==='simple'?'Simple':'Extreme';
+  }
+  function toggleTimer(){timerEnabled=!timerEnabled;renderTimer()}
+  function adjTimer(d){timerSecs=Math.max(10,Math.min(120,timerSecs+d));renderTimer()}
+
+  function startGame(){
+    const valid=players.filter(p=>p.name.trim());
+    if(!cat){alert('Elegí una categoría');return}
+    players=valid.map(p=>({name:p.name.trim()}));
+    word=securePick(CATS[cat]);
+    // Pick impostor(s)
+    impIdxs=[];
+    while(impIdxs.length<impCount){const r=secureRandInt(players.length);if(!impIdxs.includes(r))impIdxs.push(r)}
+    round=1;impPts=0;active=players.map((_,i)=>i);revealIdx=0;lastVotes={};
+    players.forEach(p=>{if(!scores[p.name])scores[p.name]={pts:0,games:0}});
+    document.getElementById('home-btn').style.display='block';
+    showReveal();
+  }
+
+  function isImp(idx){return impIdxs.includes(idx)}
+  function activeImps(){return active.filter(i=>isImp(i))}
+  function impNames(){return impIdxs.map(i=>players[i].name).join(' y ')}
+
+  function showReveal(){
+    const p=players[active[revealIdx]];
+    document.getElementById('l-rev-count').textContent='Jugador '+(revealIdx+1)+' de '+active.length;
+    document.getElementById('l-rev-name').textContent=p.name;
+    document.getElementById('l-word-area').innerHTML='';
+    document.getElementById('l-rev-footer').innerHTML='<button class="btn" onclick="L.revealWord()">Ver mi palabra</button>';
+    showScreen('s-l-reveal');
+  }
+  function revealWord(){
+    const realIdx=active[revealIdx];const imp=isImp(realIdx);
+    let label=imp?'🕵️':cat;
+    let text=imp?'IMPOSTOR':word;
+    document.getElementById('l-word-area').innerHTML='<div class="word-card reveal-anim"><div class="word-card-cat">'+label+'</div><div class="word-card-word'+(imp?' imp revealed':'')+'">'+text+'</div></div>';
+    document.getElementById('l-rev-footer').innerHTML='<button class="btn" onclick="L.nextReveal()">Listo</button>';
+  }
+  function nextReveal(){revealIdx++;if(revealIdx>=active.length)showRound();else showReveal()}
+
+  function showRound(){
+    document.getElementById('l-game-round').textContent='Ronda '+round;
+    const si=secureRandInt(active.length);
+    const ordered=[];for(let i=0;i<active.length;i++)ordered.push(active[(si+i)%active.length]);
+    document.getElementById('l-starter-name').textContent=players[ordered[0]].name;
+    const ol=document.getElementById('l-order-list');ol.innerHTML='';
+    ordered.forEach((pi,i)=>{const el=document.createElement('div');el.className='order-item';el.innerHTML=`<div class="order-n">${i+1}</div><div class="order-name">${players[pi].name}</div>${i===0?'<div class="order-start">EMPIEZA</div>':''}`;ol.appendChild(el)});
+    const ta=document.getElementById('l-timer-area');
+    if(timerEnabled){ta.innerHTML='<div class="timer-bar"><div class="timer-display" id="l-td">'+timerSecs+'</div><div class="timer-progress"><div class="timer-fill" id="l-tf" style="width:100%"></div></div><div class="timer-controls"><button class="timer-ctrl" id="l-tp" onclick="L.timerPlay()">▶</button><button class="timer-ctrl" onclick="L.timerReset()">↺</button></div></div>';timerRemaining=timerSecs}else ta.innerHTML='';
+    showCountdown(()=>showScreen('s-l-game'));
+  }
+
+  function repeatRound(){stopTimer();round++;showRound()}
+
+  function quickPlay(){
+    players=[];
+    for(let i=0;i<playerCount;i++)players.push({name:'Jugador '+(i+1)});
+    renderCats();renderTimer();renderScoreMode();showScreen('s-l-cat');
+  }
+
+  function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
+  function timerPlay(){const btn=document.getElementById('l-tp');if(!btn)return;if(timerInterval){stopTimer();btn.textContent='▶'}else{if(timerRemaining<=0)return;btn.textContent='⏸';timerInterval=setInterval(()=>{timerRemaining--;updateTimerUI();if(timerRemaining<=0){stopTimer();playBeep();btn.textContent='▶'}},1000)}}
+  function timerReset(){stopTimer();timerRemaining=timerSecs;updateTimerUI();const b=document.getElementById('l-tp');if(b)b.textContent='▶'}
+  function updateTimerUI(){const d=document.getElementById('l-td'),f=document.getElementById('l-tf');if(!d||!f)return;d.textContent=Math.max(0,timerRemaining);f.style.width=(timerRemaining/timerSecs)*100+'%';const w=timerRemaining<=5;d.className='timer-display'+(w?' warn':'');f.className='timer-fill'+(w?' warn':'')}
+
+  function goToVote(){
+    stopTimer();selectedVote=-1;
+    document.getElementById('l-vote-sub').textContent='Ronda '+round;
+    const vl=document.getElementById('l-vote-list');vl.innerHTML='';
+    active.forEach(pi=>{const btn=document.createElement('button');btn.className='vote-opt';btn.innerHTML='<span>'+players[pi].name+'</span><span class="chk">✓</span>';
+      btn.onclick=()=>{selectedVote=pi;vl.querySelectorAll('.vote-opt').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.getElementById('l-btn-acuse').disabled=false};
+      vl.appendChild(btn)});
+    document.getElementById('l-btn-acuse').disabled=true;
+    showScreen('s-l-vote');
+  }
+
+  function doEliminate(){
+    if(selectedVote<0)return;
+    lastVotes={};// In local mode we just record the group decision
+    const elimIsImp=isImp(selectedVote);
+    const elimName=players[selectedVote].name;
+    flashScreen(elimIsImp?'green':'red');
+
+    if(elimIsImp){
+      // Remove from impIdxs
+      active=active.filter(i=>i!==selectedVote);
+      const remainImps=activeImps();
+      if(remainImps.length===0){
+        // All impostors caught
+        document.getElementById('l-elim-verdict').textContent='¡Atrapado!';
+        document.getElementById('l-elim-verdict').className='elim-verdict caught';
+        document.getElementById('l-elim-lbl').textContent=impIdxs.length>1?'Impostor eliminado':'El impostor era';
+        document.getElementById('l-elim-name').textContent=elimName;
+        document.getElementById('l-elim-sub').textContent='Puede intentar adivinar la palabra';
+        document.getElementById('l-elim-score').textContent=impPts;
+        document.getElementById('l-vote-tally').innerHTML='';
+        document.getElementById('l-elim-footer').innerHTML='<button class="btn" onclick="L.showGuess()">Última chance →</button>';
+      } else {
+        // Still impostors left
+        impPts=0;// no bonus for partial catch
+        document.getElementById('l-elim-verdict').textContent='¡Atrapado!';
+        document.getElementById('l-elim-verdict').className='elim-verdict caught';
+        document.getElementById('l-elim-lbl').textContent='Impostor eliminado';
+        document.getElementById('l-elim-name').textContent=elimName;
+        document.getElementById('l-elim-sub').textContent='Pero queda otro impostor...';
+        document.getElementById('l-elim-score').textContent=impPts;
+        document.getElementById('l-vote-tally').innerHTML='';
+        document.getElementById('l-elim-footer').innerHTML='<button class="btn" onclick="L.nextRound()">Siguiente ronda →</button>';
+      }
+    } else {
+      if(scoreMode==='extreme')impPts++;
+      active=active.filter(i=>i!==selectedVote);
+      if(active.length<=activeImps().length+1){
+        if(scoreMode==='simple'){impPts=1}else{impPts++}
+        impIdxs.forEach(ii=>{scores[players[ii].name].pts+=impPts;scores[players[ii].name].games++});
+        addHistory(true,false);showResult(true,false);return;
+      }
+      document.getElementById('l-elim-verdict').textContent='Se salvó';
+      document.getElementById('l-elim-verdict').className='elim-verdict safe';
+      document.getElementById('l-elim-lbl').textContent='Eliminado';
+      document.getElementById('l-elim-name').textContent=elimName;
+      document.getElementById('l-elim-sub').textContent='No era impostor.';
+      document.getElementById('l-elim-score').textContent=impPts;
+      document.getElementById('l-vote-tally').innerHTML='';
+      document.getElementById('l-elim-footer').innerHTML='<button class="btn" onclick="L.nextRound()">Siguiente ronda →</button>';
+    }
+    showScreen('s-l-elim');
+  }
+
+  function nextRound(){round++;showRound()}
+
+  function showGuess(){
+    document.getElementById('l-guess-title').textContent='¿Adivinó?';
+    document.getElementById('l-guess-sub').textContent=impNames()+' dice la palabra en voz alta';
+    document.getElementById('l-guess-card').innerHTML='<div class="guess-cat">'+cat+'</div><div style="font-size:14px;color:var(--muted2);text-align:center">¿Acertó?</div>';
+    document.getElementById('l-guess-footer').innerHTML='<button class="btn" onclick="L.guessResult(true)">Sí, adivinó</button><button class="btn btn-danger" onclick="L.guessResult(false)">No, falló</button>';
+    showScreen('s-l-guess');
+  }
+  function guessResult(correct){
+    if(correct){
+      if(scoreMode==='simple'){impPts=1}else{impPts++}
+      impIdxs.forEach(ii=>{scores[players[ii].name].pts+=impPts;scores[players[ii].name].games++});
+      document.getElementById('l-guess-card').innerHTML='<div class="guess-result correct">¡Adivinó!</div><div style="font-size:15px;color:var(--muted2);text-align:center">La palabra era <strong style="color:var(--fg)">'+word+'</strong></div>';
+      document.getElementById('l-guess-footer').innerHTML='<button class="btn" onclick="L.finishResult(true,true)">Ver resultado</button>';
+    } else {
+      active.forEach(pi=>{if(!isImp(pi))scores[players[pi].name].pts++});
+      impIdxs.forEach(ii=>{scores[players[ii].name].games++});
+      document.getElementById('l-guess-card').innerHTML='<div class="guess-result wrong">No adivinó</div><div style="font-size:14px;color:var(--muted2);text-align:center">La palabra era <strong style="color:var(--fg)">'+word+'</strong></div>';
+      document.getElementById('l-guess-footer').innerHTML='<button class="btn" onclick="L.finishResult(false,false)">Ver resultado</button>';
+    }
+  }
+  function finishResult(impWon,guessed){addHistory(impWon,guessed);showResult(impWon,guessed)}
+
+  function addHistory(impWon,guessed){
+    history.push({word,cat,impNames:impNames(),impWon,guessed,round});
+  }
+
+  function showResult(impWon,guessed){
+    document.getElementById('l-verdict').textContent=impWon?(guessed?'Adivinó':'Se escapó'):'Atrapado';
+    document.getElementById('l-verdict').className='verdict '+(impWon?'imp-wins':'players-win');
+    if(!impWon)setTimeout(fireConfetti,200);
+    document.getElementById('l-res-lbl').textContent=impIdxs.length>1?'Los impostores eran':'El impostor era';
+    document.getElementById('l-res-name').textContent=impNames();
+    document.getElementById('l-res-info').innerHTML='La palabra era <strong>'+word+'</strong> · '+cat;
+    // Extra info
+    let extra='<div class="summary-section"><div class="summary-title">Resumen</div>';
+    extra+='<div class="summary-row"><div class="summary-row-name">Rondas jugadas</div><div class="summary-row-val">'+round+'</div></div>';
+    extra+='<div class="summary-row"><div class="summary-row-name">Puntos impostor</div><div class="summary-row-val">'+impPts+'</div></div>';
+    extra+='<div class="summary-row"><div class="summary-row-name">Resultado</div><div class="summary-row-val">'+(impWon?'Impostor ganó':'Jugadores ganaron')+'</div></div>';
+    extra+='</div>';
+    document.getElementById('l-result-extra').innerHTML=extra;
+    showScreen('s-l-result');
+  }
+
+  function playAgain(){
+    word=securePick(CATS[cat]);
+    impIdxs=[];
+    while(impIdxs.length<impCount){const r=secureRandInt(players.length);if(!impIdxs.includes(r))impIdxs.push(r)}
+    round=1;impPts=0;active=players.map((_,i)=>i);revealIdx=0;lastVotes={};
+    players.forEach(p=>{if(!scores[p.name])scores[p.name]={pts:0,games:0}});
+    showReveal();
+  }
+  function changeCat(){buildCatList(document.getElementById('l-catpick-list'),cat,c=>{cat=c;showScreen('s-l-result')},'s-l-catpick');showScreen('s-l-catpick')}
+
+  function showScores(){
+    document.getElementById('score-info-anchor-l').innerHTML=scoringInfoHtml();
+    const sl=document.getElementById('l-scores-list');sl.innerHTML='';
+    const entries=players.map(p=>({name:p.name,...(scores[p.name]||{pts:0,games:0})})).sort((a,b)=>b.pts-a.pts);
+    entries.forEach((e,i)=>{const isTop=i===0&&e.pts>0;const el=document.createElement('div');el.className='score-row-item'+(isTop?' top':'');
+      el.innerHTML=`<div class="s-pos${isTop?' top':''}">${i+1}</div><div class="s-name${isTop?' top':''}">${e.name}</div><div class="s-right"><button class="s-edit-btn" onclick="L.adjScore('${e.name}',-1)">−</button><div class="s-pts${isTop?' top':''}">${e.pts}</div><button class="s-edit-btn" onclick="L.adjScore('${e.name}',1)">+</button></div>`;
+      sl.appendChild(el)});
+    showScreen('s-l-scores');
+  }
+  function adjScore(name,d){scores[name].pts=Math.max(0,scores[name].pts+d);showScores()}
+
+  function showHistory(){
+    const hl=document.getElementById('l-history-list');hl.innerHTML='';
+    if(!history.length){hl.innerHTML='<div style="font-size:14px;color:var(--muted);text-align:center;padding:40px 0">No hay partidas aún</div>';showScreen('s-l-history');return}
+    history.slice().reverse().forEach((h,i)=>{
+      const el=document.createElement('div');el.className='history-item';
+      el.innerHTML=`<div class="history-top"><div class="history-word">${h.word}</div><div class="history-cat">${h.cat}</div></div><div class="history-detail">Impostor: <strong>${h.impNames}</strong> · ${h.impWon?(h.guessed?'Adivinó':'Se escapó'):'Atrapado'} · ${h.round} ronda${h.round>1?'s':''}</div>`;
+      hl.appendChild(el)});
+    showScreen('s-l-history');
+  }
+
+  function goHome(){stopTimer();if(confirm('¿Volver al inicio?')){document.getElementById('home-btn').style.display='none';showScreen('s-landing')}}
+
+  return {showSetup,goToNames,backToCount,setName,goToCat,toggleTimer,adjTimer,toggleScoreMode,startGame,revealWord,nextReveal,timerPlay,timerReset,goToVote,doEliminate,nextRound,showGuess,guessResult,finishResult,playAgain,changeCat,showScores,adjScore,showHistory,goHome,quickPlay,repeatRound};
+})();
+
+/* ═══ ONLINE MODE ═══ */
+const O = (function(){
+  let myId=null,roomCode=null,roomRef=null,roomListener=null,currentRoom=null,isCreating=false;
+  let myVote=null,lastState='',tallying=false,lastTurnNotified=-1;
+
+  function amHost(){return currentRoom&&currentRoom.host===myId}
+  function getPlayers(room){if(!room||!room.players)return[];return Object.entries(room.players).sort((a,b)=>a[1].order-b[1].order)}
+  function getActive(room){return getPlayers(room).filter(([,p])=>p.active)}
+  function getImpIds(room){const ids=room.impIds||[];if(!ids.length&&room.impId)return[room.impId];return ids}
+  function isImpOnline(room,id){return getImpIds(room).includes(id)}
+  function activeImpsOnline(room){return getActive(room).filter(([id])=>isImpOnline(room,id))}
+  function impNamesOnline(room){return getImpIds(room).map(id=>room.players[id]?room.players[id].name:'?').join(' y ')}
+
+  function goCreate(){
+    isCreating=true;
+    document.getElementById('o-join-title').textContent='Crear sala';
+    document.getElementById('o-code-field').style.display='none';
+    document.getElementById('o-btn-join').textContent='Crear';
+    document.getElementById('o-inp-name').value='';
+    showScreen('s-o-join');
+  }
+  function goJoin(){
+    isCreating=false;
+    document.getElementById('o-join-title').textContent='Unirse';
+    document.getElementById('o-code-field').style.display='block';
+    document.getElementById('o-btn-join').textContent='Unirse';
+    document.getElementById('o-inp-code').value='';document.getElementById('o-inp-name').value='';
+    showScreen('s-o-join');
+  }
+
+  async function doJoinOrCreate(){
+    const name=document.getElementById('o-inp-name').value.trim();
+    if(isCreating){
+      if(!name){alert('Ingresá tu nombre');return}
+      roomCode=genCode();roomRef=db.ref('rooms/'+roomCode);
+      myId=roomRef.child('players').push().key;
+      await roomRef.set({host:myId,state:'lobby',cat:'',word:'',impIds:[],round:1,impPts:0,timerEnabled:false,timerSecs:30,scoreMode:'simple',
+        starterId:'',eliminatedId:'',eliminatedIsImp:false,guessResult:'',impWon:false,impGuessed:false,impGuessWord:'',
+        clues:null,turnOrder:null,currentTurn:0,votes:null,history:null,
+        players:{[myId]:{name,order:0,active:true,revealed:false,vote:'',pts:0,games:0}}});
+      localStorage.setItem('imp_s',JSON.stringify({roomCode,myId}));listenToRoom();
+    } else {
+      roomCode=document.getElementById('o-inp-code').value.trim().toUpperCase();
+      if(!roomCode||roomCode.length<4){alert('Código inválido');return}
+      roomRef=db.ref('rooms/'+roomCode);
+      const snap=await roomRef.once('value');const room=snap.val();
+      if(!room){alert('Sala no encontrada');return}
+      if(room.state!=='lobby'){
+        showRejoinPicker(room,roomCode);
+        return;
+      }
+      if(!name){alert('Ingresá tu nombre');return}
+      // Check duplicate names
+      const existing=room.players?Object.values(room.players).map(p=>p.name.toLowerCase()):[];
+      if(existing.includes(name.toLowerCase())){alert('Ya hay alguien con ese nombre');return}
+      const n=room.players?Object.keys(room.players).length:0;
+      myId=roomRef.child('players').push().key;
+      await roomRef.child('players/'+myId).set({name,order:n,active:true,revealed:false,vote:'',pts:0,games:0});
+      localStorage.setItem('imp_s',JSON.stringify({roomCode,myId}));listenToRoom();
+    }
+  }
+
+  function listenToRoom(){
+    if(roomListener)roomRef.off('value',roomListener);
+    document.getElementById('o-exit-btn').style.display='block';
+    roomListener=roomRef.on('value',snap=>{
+      const room=snap.val();
+      if(!room){leaveClean();return}
+      // Host migration: if host is gone or left, pick next active player
+      if(room.players&&(!room.players[room.host]||room.players[room.host].left)){
+        const pls=getPlayers(room).filter(([,p])=>!p.left);
+        if(pls.length>0&&pls[0][0]===myId){
+          roomRef.update({host:myId});
+        }
+        currentRoom=room;return;
+      }
+      currentRoom=room;renderRoom(room);
+    });
+  }
+
+  function renderRoom(room){
+    const s=room.state;
+    if(s==='lobby')renderLobby(room);else if(s==='revealing')renderReveal(room);else if(s==='round')renderRound(room);
+    else if(s==='voting')renderVote(room);else if(s==='elim')renderElim(room);else if(s==='guess')renderGuess(room);else if(s==='result')renderResult(room);
+    if(s!==lastState){tallying=false;const m={lobby:'s-o-lobby',revealing:'s-o-reveal',round:'s-o-round',voting:'s-o-vote',elim:'s-o-elim',guess:'s-o-guess',result:'s-o-result'};
+      if(s==='round'&&lastState!=='round'){lastState=s;showCountdown(()=>showScreen(m[s]))}
+      else{if(m[s])showScreen(m[s]);lastState=s}}
+  }
+
+  function renderLobby(room){
+    document.getElementById('o-lobby-code').textContent=roomCode;
+    const pl=document.getElementById('o-lobby-players');pl.innerHTML='';
+    const players=getPlayers(room);
+    players.forEach(([id,p],i)=>{
+      const el=document.createElement('div');el.className='lobby-player';
+      el.innerHTML=`<div class="lobby-player-n">${i+1}</div><div class="lobby-player-name">${p.name}</div>${id===room.host?'<div class="lobby-player-host">HOST</div>':''}${id===myId?'<div class="lobby-player-you">Vos</div>':''}`;
+      pl.appendChild(el);
+    });
+    const ic=getImpCount(players.length);
+    const settings=document.getElementById('o-lobby-settings');
+    const footer=document.getElementById('o-lobby-footer');
+    if(amHost()){
+      const sm=room.scoreMode||'simple';
+      settings.innerHTML=`<div><div class="lbl">Categoría</div><button class="lobby-cat-btn ${room.cat?'chosen':''}" onclick="O.pickCat()"><span>${room.cat||'Elegir categoría...'}</span><span>→</span></button></div>
+        <div style="margin-top:12px"><div class="lbl">Puntuación</div><div class="timer-setting"><button class="timer-toggle${sm==='extreme'?' on':''}" onclick="O.toggleOnlineScoreMode()"></button><div class="timer-desc">${sm==='simple'?'Simple':'Extreme'}</div></div></div>
+        <div style="margin-top:16px;font-size:14px;color:var(--muted2)">${players.length} jugadores · ${ic} impostor${ic>1?'es':''}</div>`;
+      const n=players.length;
+      footer.innerHTML=`<button class="btn" ${n<3||!room.cat?'disabled':''} onclick="O.hostStart()">Empezar${n<3?' (mín. 3)':''}</button><button class="btn btn-ghost" onclick="O.leave()">Salir</button>`;
+    } else {
+      const smLabel=(room.scoreMode||'simple')==='simple'?'Simple':'Extreme';
+      settings.innerHTML=`<div style="margin-top:8px"><div class="lbl">Categoría</div><div style="font-size:15px;color:var(--muted2)">${room.cat||'Esperando al host...'}</div></div>
+        <div style="margin-top:8px;font-size:14px;color:var(--muted2)">${players.length} jugadores · ${ic} impostor${ic>1?'es':''} · Puntos: ${smLabel}</div>`;
+      footer.innerHTML='<div class="lobby-wait">Esperando al host...</div><button class="btn btn-ghost" onclick="O.leave()">Salir</button>';
+    }
+  }
+
+  function shareCode(){
+    const url=location.origin+location.pathname+'?sala='+roomCode;
+    if(navigator.share)navigator.share({title:'Impostor',text:'Unite a mi sala: '+roomCode,url}).catch(()=>{});
+    else if(navigator.clipboard){navigator.clipboard.writeText(url);const el=document.querySelector('.room-code-share');el.textContent='¡Link copiado!';setTimeout(()=>el.textContent='Tocar para compartir link',2000)}
+  }
+  function pickCat(){buildCatList(document.getElementById('o-catpick-list'),currentRoom.cat,c=>{roomRef.update({cat:c});showScreen('s-o-lobby')},'s-o-catpick');showScreen('s-o-catpick')}
+  function toggleOnlineScoreMode(){const cur=currentRoom.scoreMode||'simple';roomRef.update({scoreMode:cur==='simple'?'extreme':'simple'})}
+  function leave(){
+    if(roomRef&&myId){
+      if(currentRoom&&currentRoom.state==='lobby'){
+        roomRef.child('players/'+myId).remove();
+      } else {
+        // Save active state and mark as left
+        const wasActive=currentRoom&&currentRoom.players&&currentRoom.players[myId]?currentRoom.players[myId].active:false;
+        roomRef.child('players/'+myId).update({left:true,active:false,activeBeforeLeave:wasActive});
+      }
+    }
+    leaveClean();
+  }
+  function leaveClean(){
+    if(roomListener&&roomRef)roomRef.off('value',roomListener);
+    roomRef=null;roomCode=null;myId=null;currentRoom=null;lastState='';tallying=false;
+    clueAudioUrls={};activeAudios={};
+    localStorage.removeItem('imp_s');document.getElementById('o-exit-btn').style.display='none';showScreen('s-landing');
+  }
+  function exitRoom(){if(confirm('¿Salir de la sala?'))leave()}
+
+  function showRejoinPicker(room,code){
+    const list=document.getElementById('o-rejoin-list');list.innerHTML='';
+    const players=Object.entries(room.players).sort((a,b)=>a[1].order-b[1].order);
+    players.forEach(([id,p])=>{
+      const el=document.createElement('div');el.className='lobby-player';el.style.cursor='pointer';
+      let badge='';
+      if(p.left)badge='<div style="font-size:11px;color:var(--red)">desconectado</div>';
+      else if(!p.active)badge='<div style="font-size:11px;color:var(--muted)">eliminado</div>';
+      el.innerHTML=`<div class="lobby-player-n">${p.order+1}</div><div class="lobby-player-name">${p.name}</div>${badge}`;
+      el.onclick=()=>rejoinAs(code,id);
+      list.appendChild(el);
+    });
+    showScreen('s-o-rejoin');
+  }
+  function rejoinAs(code,id){
+    roomCode=code;myId=id;roomRef=db.ref('rooms/'+roomCode);
+    // Restore player: clear left flag, restore active if they were active before leaving
+    roomRef.child('players/'+myId).once('value').then(snap=>{
+      const p=snap.val();
+      if(p){
+        const u={left:null};
+        if(p.activeBeforeLeave){u.active=true;u.activeBeforeLeave=null}
+        roomRef.child('players/'+myId).update(u);
+      }
+    });
+    localStorage.setItem('imp_s',JSON.stringify({roomCode,myId}));
+    listenToRoom();
+  }
+
+  function hostStart(){
+    const room=currentRoom;const players=getPlayers(room);const n=players.length;
+    const w=securePick(CATS[room.cat]);
+    const ic=getImpCount(n);const impIds=[];
+    while(impIds.length<ic){const r=secureRandInt(n);const pid=players[r][0];if(!impIds.includes(pid))impIds.push(pid)}
+    const u={state:'revealing',word:w,impIds,round:1,impPts:0,eliminatedId:'',eliminatedIsImp:false,tied:false,
+      guessResult:'',impWon:false,impGuessed:false,impGuessWord:'',starterId:'',clues:null,turnOrder:null,currentTurn:0,votes:null,allClues:null};
+    players.forEach(([id])=>{u['players/'+id+'/active']=true;u['players/'+id+'/revealed']=false;u['players/'+id+'/vote']=''});
+    roomRef.update(u);lastTurnNotified=-1;
+  }
+
+  function renderReveal(room){
+    const me=room.players[myId];if(!me)return;
+    const players=getPlayers(room);const revealed=players.filter(([,p])=>p.revealed).length;const total=players.length;
+    document.getElementById('o-rev-count').textContent=revealed+'/'+total+' listos';
+    document.getElementById('o-rev-name').textContent=me.name;
+    const area=document.getElementById('o-rev-area');const footer=document.getElementById('o-rev-footer');
+    if(me.revealed){
+      const imp=isImpOnline(room,myId);
+      area.innerHTML='<div class="word-card"><div class="word-card-cat">'+(imp?'🕵️':room.cat)+'</div><div class="word-card-word'+(imp?' imp revealed':'')+'">'+( imp?'IMPOSTOR':room.word)+'</div></div>';
+      if(revealed>=total&&amHost())footer.innerHTML='<button class="btn" onclick="O.hostRound()">Empezar ronda →</button>';
+      else if(revealed>=total)footer.innerHTML='<div class="rev-progress">Esperando al host...</div>';
+      else footer.innerHTML='<div class="rev-progress">Esperando a los demás...</div>';
+    } else {area.innerHTML='';footer.innerHTML='<button class="btn" onclick="O.doReveal()">Ver mi palabra</button>'}
+  }
+  function doReveal(){
+    const room=currentRoom;const imp=isImpOnline(room,myId);
+    document.getElementById('o-rev-area').innerHTML='<div class="word-card reveal-anim"><div class="word-card-cat">'+(imp?'🕵️':room.cat)+'</div><div class="word-card-word'+(imp?' imp revealed':'')+'">'+( imp?'IMPOSTOR':room.word)+'</div></div>';
+    document.getElementById('o-rev-footer').innerHTML='<button class="btn" onclick="O.confirmReveal()">Listo</button>';
+  }
+  function confirmReveal(){roomRef.child('players/'+myId+'/revealed').set(true)}
+  function hostRound(){
+    const a=getActive(currentRoom);const si=secureRandInt(a.length);
+    const ordered=[];for(let i=0;i<a.length;i++)ordered.push(a[(si+i)%a.length][0]);
+    roomRef.update({state:'round',starterId:ordered[0],turnOrder:ordered,currentTurn:0,clues:null});
+    lastTurnNotified=-1;
+  }
+
+  function renderRound(room){
+    document.getElementById('o-round-lbl').textContent='Ronda '+room.round;
+    document.getElementById('o-round-cat').textContent=room.cat;
+    const area=document.getElementById('o-clue-area');
+    const turnOrder=room.turnOrder||[];const clues=room.clues||{};let ct=room.currentTurn||0;
+    // Auto-skip left/inactive players (host does it)
+    if(amHost()&&ct<turnOrder.length){
+      const curPid=turnOrder[ct];const curP=room.players[curPid];
+      if(curP&&(curP.left||!curP.active)&&!clues[curPid]){
+        roomRef.update({currentTurn:ct+1});return;
+      }
+    }
+    const allDone=ct>=turnOrder.length;
+    const me=room.players[myId];const isSpectator=me&&!me.active;
+    // Vibrate when it's my turn
+    if(!isSpectator&&!allDone&&ct<turnOrder.length&&turnOrder[ct]===myId&&ct!==lastTurnNotified){
+      vibrate(300);lastTurnNotified=ct;
+    }
+    // Show all previous rounds' clues for spectators
+    let prevHtml='';
+    if(isSpectator){
+      const allClues=room.allClues||{};
+      const roundKeys=Object.keys(allClues).sort();
+      roundKeys.forEach(rk=>{
+        const rc=allClues[rk];if(!rc)return;
+        prevHtml+='<div class="lbl" style="margin-top:8px">Ronda '+rc.round+'</div><div class="clue-list" style="margin-bottom:12px">';
+        (rc.turnOrder||[]).forEach(pid=>{const p=room.players[pid];if(!p)return;prevHtml+=`<div class="clue-item"><div class="clue-author">${p.name}</div>${renderClueContent((rc.clues||{})[pid]||'—')}</div>`});
+        prevHtml+='</div>';
+      });
+    }
+    let html=prevHtml+'<div class="lbl" style="margin-top:8px">Ronda '+room.round+'</div><div class="clue-list">';
+    turnOrder.forEach((pid,i)=>{
+      const p=room.players[pid];if(!p)return;
+      const clue=clues[pid];const isMe=pid===myId;const isCurrent=i===ct&&!allDone;
+      const isLeft=p.left||(!p.active&&!clue);
+      if(clue){
+        html+=`<div class="clue-item"><div class="clue-author">${p.name}${isMe?' (vos)':''}</div>${renderClueContent(clue)}</div>`;
+      } else if(isLeft){
+        html+=`<div class="clue-item" style="opacity:.3"><div class="clue-author">${p.name}</div><div class="clue-text pending">salió</div></div>`;
+      } else if(isCurrent&&isMe&&!isSpectator){
+        html+=`<div class="clue-item current"><div class="clue-author">${p.name} (vos)</div><div id="o-clue-mode"><div class="clue-mode-pick"><button class="clue-mode-btn" onclick="O.pickClueText()">✏️ Escribir</button><button class="clue-mode-btn" onclick="O.pickClueAudio()">🎤 Audio</button></div></div></div>`;
+      } else if(isCurrent){
+        html+=`<div class="clue-item current"><div class="clue-author">${p.name}</div><div class="clue-text pending">Escribiendo...</div></div>`;
+      } else {
+        html+=`<div class="clue-item waiting"><div class="clue-author">${p.name}</div><div class="clue-text pending">—</div></div>`;
+      }
+    });
+    html+='</div>';
+    if(isSpectator){html+='<div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Modo espectador 👀</div>'}
+    else if(allDone){
+      html+='<div style="text-align:center;margin-top:20px;font-size:14px;color:var(--muted2)">Todas las pistas dadas</div>';
+      if(amHost())html+='<button class="btn" style="margin-top:12px" onclick="O.hostGoVote()">Votar →</button>';
+      else html+='<div class="lobby-wait">Esperando al host...</div>';
+    }
+    area.innerHTML=html;
+    const inp=document.getElementById('o-clue-inp');
+    if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')O.submitClue()})}
+  }
+
+  function submitClue(){
+    const inp=document.getElementById('o-clue-inp');if(!inp)return;
+    const clue=inp.value.trim();if(!clue)return;
+    const ct=currentRoom.currentTurn||0;
+    roomRef.update({['clues/'+myId]:clue,currentTurn:ct+1});
+  }
+
+  // Audio recording
+  let mediaRecorder=null,audioChunks=[],audioBlob=null,recInterval=null;
+  let activeAudios={};
+  let clueAudioUrls={};
+
+  function renderClueContent(clue){
+    if(!clue||clue==='—')return '<span class="clue-text">—</span>';
+    if(clue.startsWith('🎵:')){
+      const url=clue.slice(3);
+      const id='aud_'+Math.random().toString(36).slice(2,8);
+      clueAudioUrls[id]=url;
+      return `<div class="clue-audio-wrap" style="flex:1">
+        <button class="clue-audio-play" onclick="O.playClueAudio('${id}',this)">▶</button>
+        <div class="clue-audio-bar"><div class="clue-audio-bar-fill" id="${id}"></div></div>
+      </div>`;
+    }
+    return `<span class="clue-text">${clue}</span>`;
+  }
+
+  function playClueAudio(barId,btn){
+    if(activeAudios[barId]){activeAudios[barId].pause();delete activeAudios[barId];btn.textContent='▶';return}
+    const url=clueAudioUrls[barId];if(!url)return;
+    const a=new Audio(url);activeAudios[barId]=a;btn.textContent='⏸';
+    a.onended=()=>{btn.textContent='▶';delete activeAudios[barId];const bar=document.getElementById(barId);if(bar)bar.style.width='0%'};
+    a.ontimeupdate=()=>{const bar=document.getElementById(barId);if(bar&&a.duration)bar.style.width=(a.currentTime/a.duration*100)+'%'};
+    a.play().catch(()=>{btn.textContent='▶';delete activeAudios[barId]});
+  }
+
+  function showClueMode(){
+    // Cleanup any active recording
+    if(recInterval){clearInterval(recInterval);recInterval=null}
+    if(mediaRecorder&&mediaRecorder.state==='recording'){
+      mediaRecorder.stream.getTracks().forEach(t=>t.stop());
+      try{mediaRecorder.stop()}catch(e){}
+    }
+    mediaRecorder=null;audioBlob=null;
+    const wrap=document.getElementById('o-clue-mode');
+    if(!wrap)return;
+    wrap.innerHTML=`<div class="clue-mode-pick">
+      <button class="clue-mode-btn" onclick="O.pickClueText()">✏️ Escribir</button>
+      <button class="clue-mode-btn" onclick="O.pickClueAudio()">🎤 Audio</button>
+    </div>`;
+  }
+
+  function pickClueText(){
+    const wrap=document.getElementById('o-clue-mode');if(!wrap)return;
+    wrap.innerHTML=`<div class="clue-input-wrap"><input class="clue-input" id="o-clue-inp" placeholder="Tu pista..." maxlength="60" autocomplete="off"><button class="clue-send" onclick="O.submitClue()">Enviar</button></div><div style="text-align:center;margin-top:6px"><button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Figtree',sans-serif" onclick="O.showClueMode()">← cambiar a audio</button></div>`;
+    const inp=document.getElementById('o-clue-inp');if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')O.submitClue()})}
+  }
+
+  async function pickClueAudio(){
+    const wrap=document.getElementById('o-clue-mode');if(!wrap)return;
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      audioChunks=[];audioBlob=null;
+      // Determine supported mime type
+      const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'audio/mp4';
+      mediaRecorder=new MediaRecorder(stream,{mimeType});
+      mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data)};
+      mediaRecorder.onstop=()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        audioBlob=new Blob(audioChunks,{type:mimeType});
+        showAudioPreview(wrap);
+      };
+      // Show recording UI
+      let secs=0;
+      wrap.innerHTML=`<div class="clue-audio-wrap">
+        <button class="clue-rec-btn recording" id="o-rec-stop" onclick="O.stopRec()">⏹</button>
+        <div class="rec-timer" id="o-rec-timer">0s</div>
+        <div style="flex:1;font-size:13px;color:var(--muted)">Grabando...</div>
+      </div>`;
+      mediaRecorder.start();
+      recInterval=setInterval(()=>{
+        secs++;
+        const el=document.getElementById('o-rec-timer');if(el)el.textContent=secs+'s';
+        if(secs>=5)O.stopRec();
+      },1000);
+    }catch(e){
+      wrap.innerHTML=`<div style="font-size:13px;color:var(--red)">No se pudo acceder al micrófono</div>
+        <button class="clue-mode-btn" onclick="O.pickClueText()" style="margin-top:8px">✏️ Escribir</button>`;
+    }
+  }
+
+  function stopRec(){
+    if(recInterval){clearInterval(recInterval);recInterval=null}
+    if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();
+  }
+
+  function showAudioPreview(wrap){
+    const url=URL.createObjectURL(audioBlob);
+    wrap.innerHTML=`<div class="clue-audio-wrap">
+      <button class="clue-audio-play" onclick="O.previewAudio(this)" data-src="${url}">▶</button>
+      <div class="clue-audio-bar"><div class="clue-audio-bar-fill" id="o-preview-bar"></div></div>
+      <button class="clue-send" onclick="O.submitAudio()">Enviar</button>
+      <button class="clue-rec-btn done" onclick="O.pickClueAudio()" title="Regrabar">🔄</button>
+    </div><div style="text-align:center;margin-top:6px"><button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:'Figtree',sans-serif" onclick="O.showClueMode()">← cambiar a texto</button></div>`;
+  }
+
+  let previewAudioEl=null;
+  function previewAudio(btn){
+    if(previewAudioEl){previewAudioEl.pause();previewAudioEl=null;btn.textContent='▶';return}
+    const a=new Audio(btn.dataset.src);previewAudioEl=a;btn.textContent='⏸';
+    a.onended=()=>{btn.textContent='▶';previewAudioEl=null};
+    a.ontimeupdate=()=>{const bar=document.getElementById('o-preview-bar');if(bar&&a.duration)bar.style.width=(a.currentTime/a.duration*100)+'%'};
+    a.play();
+  }
+
+  async function submitAudio(){
+    if(!audioBlob)return;
+    const btn=document.querySelector('.clue-send');if(btn){btn.disabled=true;btn.textContent='Subiendo...'}
+    try{
+      const ext=audioBlob.type.includes('webm')?'webm':'m4a';
+      const path='audio/'+roomCode+'/'+myId+'_r'+currentRoom.round+'.'+ext;
+      const ref=storage.ref(path);
+      await ref.put(audioBlob);
+      const url=await ref.getDownloadURL();
+      const ct=currentRoom.currentTurn||0;
+      roomRef.update({['clues/'+myId]:'🎵:'+url,currentTurn:ct+1});
+    }catch(e){
+      console.error('Audio upload failed',e);
+      if(btn){btn.disabled=false;btn.textContent='Enviar'}
+      alert('Error al subir audio. Intentá de nuevo o escribí la pista.');
+    }
+  }
+
+  function hostGoVote(){
+    if(!amHost())return;tallying=false;
+    const room=currentRoom;
+    // Save current round clues to allClues
+    const roundClues=room.clues||{};const turnOrd=room.turnOrder||[];
+    const clueEntry={clues:roundClues,turnOrder:turnOrd,round:room.round};
+    const u={state:'voting',votes:null,['allClues/r'+room.round]:clueEntry};
+    getActive(currentRoom).forEach(([id])=>{u['players/'+id+'/vote']=''});
+    roomRef.update(u);myVote=null;
+  }
+
+  function renderVote(room){
+    const active=getActive(room);const me=room.players[myId];
+    const voted=active.filter(([,p])=>p.vote).length;const total=active.length;
+    document.getElementById('o-vote-sub').textContent='Ronda '+room.round+' · '+voted+'/'+total+' votaron';
+    const area=document.getElementById('o-vote-area');const footer=document.getElementById('o-vote-footer');
+    // Build clues from ALL rounds
+    const allClues=room.allClues||{};
+    let clueHtml='';
+    const roundKeys=Object.keys(allClues).sort();
+    roundKeys.forEach(rk=>{
+      const rc=allClues[rk];if(!rc)return;
+      clueHtml+='<div class="lbl" style="margin-top:8px">Ronda '+rc.round+'</div><div class="clue-list" style="margin-bottom:12px">';
+      (rc.turnOrder||[]).forEach(pid=>{const p=room.players[pid];if(!p)return;clueHtml+=`<div class="clue-item"><div class="clue-author">${p.name}</div>${renderClueContent((rc.clues||{})[pid]||'—')}</div>`});
+      clueHtml+='</div>';
+    });
+    if(!me||!me.active){area.innerHTML=clueHtml+'<div class="lobby-wait">Estás eliminado — modo espectador 👀</div>';footer.innerHTML='';return}
+    if(me.vote){
+      const vf=room.players[me.vote];
+      if(voted>=total){
+        area.innerHTML=clueHtml+'<div class="lobby-wait">Todos votaron</div>';
+        if(amHost())footer.innerHTML='<button class="btn" onclick="O.doTally()">Continuar →</button>';
+        else footer.innerHTML='<div class="lobby-wait">Esperando al host...</div>';
+      } else {
+        area.innerHTML=clueHtml+'<div class="lobby-wait">Votaste por '+(vf?vf.name:'...')+'<br>'+voted+'/'+total+'</div>';footer.innerHTML='';
+      }
+    } else {
+      const vl=document.createElement('div');vl.className='vote-list';
+      active.forEach(([id,p])=>{if(id===myId)return;const btn=document.createElement('button');btn.className='vote-opt'+(myVote===id?' on':'');btn.innerHTML='<span>'+p.name+'</span><span class="chk">✓</span>';
+        btn.onclick=()=>{myVote=id;vl.querySelectorAll('.vote-opt').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.getElementById('o-cast').disabled=false};vl.appendChild(btn)});
+      area.innerHTML=clueHtml;area.appendChild(vl);footer.innerHTML='<button class="btn btn-danger" id="o-cast" onclick="O.castVote()" disabled>Votar</button>';
+    }
+  }
+  function castVote(){if(!myVote)return;roomRef.child('players/'+myId+'/vote').set(myVote)}
+  function doTally(){if(!amHost())return;tallyVotes(currentRoom)}
+
+  function tallyVotes(room){
+    const active=getActive(room);const voteMap={};const voteDetail={};
+    active.forEach(([id,p])=>{if(p.vote){voteMap[p.vote]=(voteMap[p.vote]||0)+1;voteDetail[p.name]=room.players[p.vote]?room.players[p.vote].name:'?'}});
+    const maxV=Math.max(...Object.values(voteMap));const tied=Object.keys(voteMap).filter(id=>voteMap[id]===maxV);
+    // Tie: nobody eliminated
+    if(tied.length>1){
+      roomRef.update({state:'elim',eliminatedId:'__tie__',eliminatedIsImp:false,votes:voteDetail,tied:true});
+      return;
+    }
+    const eid=tied[0];
+    const elimIsImp=isImpOnline(room,eid);
+    const sm=room.scoreMode||'simple';
+    const u={state:'elim',eliminatedId:eid,eliminatedIsImp:elimIsImp,votes:voteDetail,tied:false};
+    if(!elimIsImp){
+      if(sm==='extreme')u['impPts']=room.impPts+1;
+      u['players/'+eid+'/active']=false;
+      const rem=active.filter(([id])=>id!==eid);
+      const remImps=rem.filter(([id])=>isImpOnline(room,id));
+      if(rem.length<=remImps.length+1){
+        if(sm==='simple'){u['impPts']=1}else{u['impPts']=room.impPts+2}
+        u['impWon']=true;
+        const pts=sm==='simple'?1:(room.impPts+2);
+        getImpIds(room).forEach(iid=>{const imp=room.players[iid];u['players/'+iid+'/pts']=(imp.pts||0)+pts;u['players/'+iid+'/games']=(imp.games||0)+1});
+      }
+    } else {
+      u['players/'+eid+'/active']=false;
+    }
+    roomRef.update(u);
+  }
+
+  function renderElim(room){
+    // Vote tally
+    const vt=document.getElementById('o-vote-tally');
+    if(room.votes){vt.innerHTML=buildVoteTally(room.votes)}else vt.innerHTML='';
+    // Tie: nobody eliminated
+    if(room.tied){
+      document.getElementById('o-elim-verdict').textContent='¡Empate!';
+      document.getElementById('o-elim-verdict').className='elim-verdict';document.getElementById('o-elim-verdict').style.color='var(--muted2)';
+      document.getElementById('o-elim-lbl').textContent='';
+      document.getElementById('o-elim-name').textContent='Nadie eliminado';
+      document.getElementById('o-elim-sub').textContent='Los votos quedaron empatados. Se juega otra ronda.';
+      document.getElementById('o-elim-score').textContent=room.impPts;
+      const ef=document.getElementById('o-elim-footer');
+      ef.innerHTML=amHost()?'<button class="btn" onclick="O.nextRound()">Siguiente ronda →</button>':'<div class="lobby-wait">Esperando al host...</div>';
+      return;
+    }
+    document.getElementById('o-elim-verdict').style.color='';
+    const elim=room.players[room.eliminatedId];if(!elim)return;
+    const impIds=getImpIds(room);const remainImps=getActive(room).filter(([id])=>impIds.includes(id)&&id!==room.eliminatedId);
+    if(lastState!=='elim')flashScreen(room.eliminatedIsImp?'green':'red');
+    if(room.eliminatedIsImp){
+      if(remainImps.length===0||(room.eliminatedIsImp&&getActive(room).filter(([id])=>impIds.includes(id)).length===0)){
+        document.getElementById('o-elim-verdict').textContent='¡Atrapado!';document.getElementById('o-elim-verdict').className='elim-verdict caught';
+        document.getElementById('o-elim-lbl').textContent=impIds.length>1?'Impostor eliminado':'El impostor era';
+        document.getElementById('o-elim-name').textContent=elim.name;
+        document.getElementById('o-elim-sub').textContent='Puede intentar adivinar la palabra';
+        document.getElementById('o-elim-score').textContent=room.impPts;
+        document.getElementById('o-elim-footer').innerHTML=amHost()?'<button class="btn" onclick="O.goGuess()">Última chance →</button>':'<div class="lobby-wait">Esperando al host...</div>';
+      } else {
+        document.getElementById('o-elim-verdict').textContent='¡Atrapado!';document.getElementById('o-elim-verdict').className='elim-verdict caught';
+        document.getElementById('o-elim-lbl').textContent='Impostor eliminado';
+        document.getElementById('o-elim-name').textContent=elim.name;
+        document.getElementById('o-elim-sub').textContent='Pero queda otro impostor...';
+        document.getElementById('o-elim-score').textContent=room.impPts;
+        document.getElementById('o-elim-footer').innerHTML=amHost()?'<button class="btn" onclick="O.nextRound()">Siguiente ronda →</button>':'<div class="lobby-wait">Esperando al host...</div>';
+      }
+    } else {
+      document.getElementById('o-elim-verdict').textContent='Se salvó';document.getElementById('o-elim-verdict').className='elim-verdict safe';
+      document.getElementById('o-elim-lbl').textContent='Eliminado';document.getElementById('o-elim-name').textContent=elim.name;
+      document.getElementById('o-elim-sub').textContent='No era impostor.';document.getElementById('o-elim-score').textContent=room.impPts;
+      const ef=document.getElementById('o-elim-footer');
+      if(room.impWon)ef.innerHTML=amHost()?'<button class="btn" onclick="O.goResult()">Ver resultado</button>':'<div class="lobby-wait">Esperando al host...</div>';
+      else ef.innerHTML=amHost()?'<button class="btn" onclick="O.nextRound()">Siguiente ronda →</button>':'<div class="lobby-wait">Esperando al host...</div>';
+    }
+  }
+  function goGuess(){roomRef.update({state:'guess'})}
+  function nextRound(){
+    const a=getActive(currentRoom);const si=secureRandInt(a.length);
+    const ordered=[];for(let i=0;i<a.length;i++)ordered.push(a[(si+i)%a.length][0]);
+    const u={round:currentRoom.round+1,state:'round',starterId:ordered[0],turnOrder:ordered,currentTurn:0,clues:null,votes:null};
+    a.forEach(([id])=>{u['players/'+id+'/vote']=''});
+    roomRef.update(u);myVote=null;lastTurnNotified=-1;
+  }
+  function goResult(){
+    // Save history
+    const room=currentRoom;
+    const hEntry={word:room.word,cat:room.cat,impNames:impNamesOnline(room),impWon:room.impWon,guessed:room.impGuessed,round:room.round,ts:Date.now()};
+    roomRef.child('history').push(hEntry);
+    roomRef.update({state:'result'});
+    // Cleanup audio files
+    if(amHost())cleanupAudio(room);
+  }
+
+  function cleanupAudio(room){
+    try{
+      const ref=storage.ref('audio/'+roomCode);
+      ref.listAll().then(res=>{
+        res.items.forEach(item=>item.delete().catch(()=>{}));
+      }).catch(()=>{});
+    }catch(e){}
+  }
+
+  function renderGuess(room){
+    const impIds=getImpIds(room);const impName=impNamesOnline(room);
+    const card=document.getElementById('o-guess-card');const footer=document.getElementById('o-guess-footer');
+    if(room.guessResult){
+      const c=room.guessResult==='correct';
+      document.getElementById('o-guess-title').textContent=c?'¡Adivinó!':'No adivinó';
+      document.getElementById('o-guess-sub').textContent='';
+      card.innerHTML='<div class="guess-result '+(c?'correct':'wrong')+'">'+(room.impGuessWord||'—')+'</div><div style="font-size:14px;color:var(--muted2);text-align:center">La palabra era <strong style="color:var(--fg)">'+room.word+'</strong></div>';
+      if(amHost())footer.innerHTML='<button class="btn" onclick="O.goResult()">Ver resultado →</button>';
+      else footer.innerHTML='<div class="lobby-wait">Esperando al host...</div>';
+    } else if(impIds.includes(myId)){
+      document.getElementById('o-guess-title').textContent='Última chance';
+      document.getElementById('o-guess-sub').textContent='¿Cuál era la palabra?';
+      card.innerHTML='<div class="guess-cat">'+room.cat+'</div><input class="guess-input" id="o-guess-inp" placeholder="Escribí la palabra..." maxlength="40" autocomplete="off">';
+      footer.innerHTML='<button class="btn" onclick="O.submitGuessWord()">Confirmar</button>';
+      vibrate(300);
+      const inp=document.getElementById('o-guess-inp');if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')O.submitGuessWord()})}
+    } else {
+      document.getElementById('o-guess-title').textContent='Última chance';
+      document.getElementById('o-guess-sub').textContent=impName+' está adivinando...';
+      card.innerHTML='<div class="guess-cat">'+room.cat+'</div><div style="font-size:14px;color:var(--muted2);text-align:center">Esperando...</div>';
+      footer.innerHTML='';
+    }
+  }
+  function submitGuessWord(){
+    const inp=document.getElementById('o-guess-inp');if(!inp)return;
+    const guess=inp.value.trim();if(!guess)return;
+    const room=currentRoom;const sm=room.scoreMode||'simple';
+    const correct=wordsMatch(guess,room.word);
+    const u={impGuessWord:guess,guessResult:correct?'correct':'wrong'};
+    if(correct){
+      u['impWon']=true;u['impGuessed']=true;
+      const pts=sm==='simple'?1:(room.impPts+1);
+      getImpIds(room).forEach(iid=>{const imp=room.players[iid];u['players/'+iid+'/pts']=(imp.pts||0)+pts});
+    }
+    else{u['impWon']=false;u['impGuessed']=false;getActive(room).forEach(([id,p])=>{if(!isImpOnline(room,id))u['players/'+id+'/pts']=(p.pts||0)+1})}
+    getImpIds(room).forEach(iid=>{const imp=room.players[iid];u['players/'+iid+'/games']=(imp.games||0)+1});
+    roomRef.update(u);
+  }
+
+  function renderResult(room){
+    const impIds=getImpIds(room);const impName=impNamesOnline(room);
+    const impWon=room.impWon;
+    document.getElementById('o-verdict').textContent=impWon?(room.impGuessed?'Adivinó':'Se escapó'):'Atrapado';
+    document.getElementById('o-verdict').className='verdict '+(impWon?'imp-wins':'players-win');
+    if(!impWon&&lastState!=='result')setTimeout(fireConfetti,200);
+    document.getElementById('o-res-lbl').textContent=impIds.length>1?'Los impostores eran':'El impostor era';
+    document.getElementById('o-res-name').textContent=impName;
+    document.getElementById('o-res-info').innerHTML='La palabra era <strong>'+room.word+'</strong> · '+room.cat;
+    // Summary
+    let extra='<div class="summary-section"><div class="summary-title">Resumen</div>';
+    extra+='<div class="summary-row"><div class="summary-row-name">Rondas</div><div class="summary-row-val">'+room.round+'</div></div>';
+    extra+='<div class="summary-row"><div class="summary-row-name">Pts impostor</div><div class="summary-row-val">'+room.impPts+'</div></div>';
+    // Show clues
+    const clues=room.clues||{};const turnOrder=room.turnOrder||[];
+    if(turnOrder.length){
+      extra+='</div><div class="summary-section"><div class="summary-title">Últimas pistas</div>';
+      turnOrder.forEach(pid=>{const p=room.players[pid];if(!p)return;
+        extra+=`<div class="summary-row"><div class="summary-row-name">${p.name}${impIds.includes(pid)?' 🕵️':''}</div><div class="summary-row-val">${clues[pid]||'—'}</div></div>`});
+    }
+    extra+='</div>';
+    document.getElementById('o-result-extra').innerHTML=extra;
+    const btns=document.getElementById('o-res-btns');
+    if(amHost())btns.innerHTML='<button class="btn" onclick="O.hostStart()">Jugar de nuevo</button><button class="btn btn-ghost" onclick="O.pickCatResult()">Cambiar categoría</button><button class="btn btn-ghost" onclick="O.showScores()">Tabla →</button>';
+    else btns.innerHTML='<div class="lobby-wait">Esperando al host...</div><button class="btn btn-ghost" onclick="O.showScores()">Tabla →</button>';
+  }
+  function pickCatResult(){buildCatList(document.getElementById('o-catpick-list'),currentRoom.cat,c=>{roomRef.update({cat:c});showScreen('s-o-result')},'s-o-catpick');showScreen('s-o-catpick')}
+
+  function showScores(){
+    document.getElementById('score-info-anchor-o').innerHTML=scoringInfoHtml();
+    const room=currentRoom;const sl=document.getElementById('o-scores-list');sl.innerHTML='';
+    const entries=getPlayers(room).sort((a,b)=>(b[1].pts||0)-(a[1].pts||0));
+    entries.forEach(([id,p],i)=>{const isTop=i===0&&p.pts>0;const el=document.createElement('div');el.className='score-row-item'+(isTop?' top':'');
+      el.innerHTML='<div class="s-pos'+(isTop?' top':'')+'">'+(i+1)+'</div><div class="s-name'+(isTop?' top':'')+'">'+p.name+(id===myId?' (vos)':'')+'</div><div class="s-pts'+(isTop?' top':'')+'">'+(p.pts||0)+'</div>';
+      sl.appendChild(el)});
+    const sf=document.getElementById('o-scores-footer');
+    sf.innerHTML=amHost()?'<button class="btn" onclick="O.hostStart()">Jugar de nuevo</button><button class="btn btn-ghost" onclick="showScreen(\'s-o-result\')">Volver</button>':'<button class="btn btn-ghost" onclick="showScreen(\'s-o-result\')">Volver</button>';
+    showScreen('s-o-scores');
+  }
+
+  // Reconnect
+  (function(){try{const s=JSON.parse(localStorage.getItem('imp_s'));if(s&&s.roomCode&&s.myId){roomCode=s.roomCode;myId=s.myId;roomRef=db.ref('rooms/'+roomCode);roomRef.once('value').then(snap=>{const r=snap.val();if(r&&r.players&&r.players[myId])listenToRoom();else{localStorage.removeItem('imp_s');document.getElementById('o-exit-btn').style.display='none';showScreen('s-landing')}});return}}catch(e){}})();
+
+  return {goCreate,goJoin,doJoinOrCreate,shareCode,pickCat,leave,exitRoom,hostStart,doReveal,confirmReveal,hostRound,submitClue,hostGoVote,castVote,doTally,goGuess,nextRound,goResult,submitGuessWord,pickCatResult,showScores,showRejoinPicker,pickClueText,pickClueAudio,stopRec,previewAudio,submitAudio,playClueAudio,showClueMode,toggleOnlineScoreMode};
+})();
+
+// URL param: auto-open join with room code
+(function(){
+  const params=new URLSearchParams(location.search);
+  const sala=params.get('sala');
+  if(sala&&!localStorage.getItem('imp_s')){
+    const code=sala.toUpperCase();
+    history.replaceState(null,'',location.pathname);
+    // Check if game is in progress
+    const ref=db.ref('rooms/'+code);
+    ref.once('value').then(snap=>{
+      const room=snap.val();
+      if(!room){O.goJoin();document.getElementById('o-inp-code').value=code;return}
+      if(room.state!=='lobby'){
+        O.showRejoinPicker(room,code);
+      } else {
+        O.goJoin();document.getElementById('o-inp-code').value=code;
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>
