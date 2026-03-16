@@ -567,7 +567,7 @@ function closeFeedback(){const ov=document.getElementById('fb-overlay');if(ov)ov
 function sendFeedback(){
   const text=document.getElementById('fb-text').value.trim();if(!text)return;
   db.ref('feedback').push({text,ts:Date.now()});
-  fetch('https://api.telegram.org/bot8653904871:AAHv2887QmwAppmUvyfFgPNwEy18PzfxDm4/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:'6063782636',text:'📬 Impostor Feedback:\n\n'+text})}).catch(()=>{});
+  fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}).catch(()=>{});
   closeFeedback();
   // Small thank you
   const ty=document.createElement('div');ty.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);color:var(--fg);padding:12px 20px;border-radius:12px;font-size:14px;z-index:500;font-family:Figtree,sans-serif';
