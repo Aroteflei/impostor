@@ -285,7 +285,7 @@ body{font-family:'Figtree',sans-serif;background:var(--bg);color:var(--fg);min-h
 <button class="home-btn" id="home-btn" style="display:none" onclick="L.goHome()">⌂ Inicio</button>
 <button class="home-btn" id="o-exit-btn" style="display:none;right:auto;left:24px" onclick="O.exitRoom()">✕ Salir</button>
 <div id="s-l-reveal" class="screen screen-reveal"><div class="rev-top"><div class="rev-count" id="l-rev-count"></div><div class="rev-name" id="l-rev-name">—</div></div><div id="l-word-area"></div><div class="rev-footer" id="l-rev-footer"></div></div>
-<div id="s-l-game" class="screen screen-game"><div class="game-top"><div class="game-round" id="l-game-round">Ronda 1</div><button class="vote-quick" onclick="L.goToVote()">Votar</button></div><div class="starter-card"><div class="starter-lbl">Empieza</div><div class="starter-name" id="l-starter-name">—</div><div class="starter-sub">y siguen en orden</div></div><div class="order-card"><div class="order-title">Orden de pistas</div><div id="l-order-list"></div></div><div id="l-timer-area"></div><button class="btn" onclick="L.goToVote()">Listo, votar →</button><button class="btn btn-ghost" onclick="L.repeatRound()">🔄 Otra ronda de pistas</button></div>
+<div id="s-l-game" class="screen screen-game"><div class="game-top"><div class="game-round" id="l-game-round">Ronda 1</div><button class="vote-quick" onclick="L.goToVote()">Votar</button></div><div class="starter-card"><div class="starter-lbl">Empieza</div><div class="starter-name" id="l-starter-name">—</div><div class="starter-sub">y siguen en orden</div></div><div class="order-card"><div class="order-title">Orden de pistas</div><div id="l-order-list"></div></div><div id="l-timer-area"></div><button class="btn" onclick="L.goToVote()">Listo, votar →</button><button class="btn btn-ghost" onclick="L.repeatRound()">🔄 Otra ronda de pistas</button><button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:Figtree,sans-serif;margin-top:8px" onclick="L.restartGame()">Reiniciar partida</button></div>
 <div id="s-l-vote" class="screen screen-vote"><div class="vote-q">Eliminar a...</div><div class="vote-sub" id="l-vote-sub"></div><div class="vote-list" id="l-vote-list"></div><div class="vote-footer"><button class="btn btn-danger" id="l-btn-acuse" onclick="L.doEliminate()" disabled>Eliminar</button><button class="btn btn-ghost" onclick="showScreen('s-l-game')">Volver</button></div></div>
 <div id="s-l-elim" class="screen screen-elim"><div><div class="elim-verdict" id="l-elim-verdict">—</div><div class="elim-card"><div class="elim-lbl" id="l-elim-lbl">Eliminado</div><div class="elim-name" id="l-elim-name">—</div><div class="elim-sub" id="l-elim-sub"></div></div><div id="l-vote-tally"></div><div class="score-pill"><div class="score-pill-lbl">Puntos del impostor</div><div class="score-pill-num" id="l-elim-score">0</div></div></div><div class="elim-footer" id="l-elim-footer"></div></div>
 <div id="s-l-guess" class="screen screen-guess"><div><div class="guess-title" id="l-guess-title">¿Adivinó?</div><div class="guess-sub" id="l-guess-sub"></div></div><div class="guess-card" id="l-guess-card"></div><div class="guess-footer" id="l-guess-footer"></div></div>
@@ -682,6 +682,14 @@ const L = (function(){
   }
 
   function repeatRound(){stopTimer();round++;showRound()}
+  function restartGame(){
+    if(!confirm('¿Reiniciar? Se repartirán nueva palabra y roles.'))return;
+    stopTimer();
+    word=securePick(CATS[cat]);
+    impIdxs=[];while(impIdxs.length<impCount){const r=secureRandInt(players.length);if(!impIdxs.includes(r))impIdxs.push(r)}
+    round=1;impPts=0;active=players.map((_,i)=>i);revealIdx=0;lastVotes={};
+    showReveal();
+  }
 
   function quickPlay(){
     players=[];
@@ -836,7 +844,7 @@ const L = (function(){
 
   function goHome(){stopTimer();if(confirm('¿Volver al inicio?')){document.getElementById('home-btn').style.display='none';showScreen('s-landing')}}
 
-  return {showSetup,goToNames,backToCount,setName,goToCat,toggleTimer,adjTimer,toggleScoreMode,startGame,revealWord,nextReveal,timerPlay,timerReset,goToVote,doEliminate,nextRound,showGuess,guessResult,finishResult,playAgain,changeCat,showScores,adjScore,showHistory,goHome,quickPlay,repeatRound};
+  return {showSetup,goToNames,backToCount,setName,goToCat,toggleTimer,adjTimer,toggleScoreMode,startGame,revealWord,nextReveal,timerPlay,timerReset,goToVote,doEliminate,nextRound,showGuess,guessResult,finishResult,playAgain,changeCat,showScores,adjScore,showHistory,goHome,quickPlay,repeatRound,restartGame};
 })();
 
 /* ═══ ONLINE MODE ═══ */
@@ -1031,7 +1039,7 @@ const O = (function(){
     if(me.revealed){
       const imp=isImpOnline(room,myId);
       area.innerHTML='<div class="word-card"><div class="word-card-cat">'+(imp?'🕵️':room.cat)+'</div><div class="word-card-word'+(imp?' imp revealed':'')+'">'+( imp?'IMPOSTOR':room.word)+'</div></div>';
-      if(revealed>=total&&amHost())footer.innerHTML='<button class="btn" onclick="O.hostRound()">Empezar ronda →</button>';
+      if(revealed>=total&&amHost())footer.innerHTML='<button class="btn" onclick="O.hostRound()">Empezar ronda →</button><button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:Figtree,sans-serif;margin-top:8px" onclick="O.restartRound()">🔄 Reiniciar ronda</button>';
       else if(revealed>=total)footer.innerHTML='<div class="rev-progress">Esperando al host...</div>';
       else footer.innerHTML='<div class="rev-progress">Esperando a los demás...</div>';
     } else {area.innerHTML='';footer.innerHTML='<button class="btn" onclick="O.doReveal()">Ver mi palabra</button>'}
@@ -1047,6 +1055,11 @@ const O = (function(){
     const ordered=[];for(let i=0;i<a.length;i++)ordered.push(a[(si+i)%a.length][0]);
     roomRef.update({state:'round',starterId:ordered[0],turnOrder:ordered,currentTurn:0,clues:null});
     lastTurnNotified=-1;
+  }
+  function restartRound(){
+    if(!amHost())return;
+    if(!confirm('¿Reiniciar la ronda? Se repartirán nuevas palabras y roles.'))return;
+    hostStart();
   }
 
   function renderRound(room){
@@ -1097,6 +1110,7 @@ const O = (function(){
       }
     });
     html+='</div>';
+    if(amHost())html+='<div style="text-align:center;margin-top:16px"><button style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:Figtree,sans-serif" onclick="O.restartRound()">🔄 Reiniciar ronda</button></div>';
     if(isSpectator){html+='<div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">Modo espectador 👀</div>'}
     else if(allDone){
       html+='<div style="text-align:center;margin-top:20px;font-size:14px;color:var(--muted2)">Todas las pistas dadas</div>';
@@ -1471,7 +1485,7 @@ const O = (function(){
   // Reconnect
   (function(){try{const s=JSON.parse(localStorage.getItem('imp_s'));if(s&&s.roomCode&&s.myId){roomCode=s.roomCode;myId=s.myId;roomRef=db.ref('rooms/'+roomCode);roomRef.once('value').then(snap=>{const r=snap.val();if(r&&r.players&&r.players[myId])listenToRoom();else{localStorage.removeItem('imp_s');document.getElementById('o-exit-btn').style.display='none';showScreen('s-landing')}});return}}catch(e){}})();
 
-  return {goCreate,goJoin,doJoinOrCreate,shareCode,pickCat,leave,exitRoom,hostStart,doReveal,confirmReveal,hostRound,submitClue,hostGoVote,castVote,doTally,goGuess,nextRound,goResult,submitGuessWord,pickCatResult,showScores,showRejoinPicker,pickClueText,pickClueAudio,stopRec,previewAudio,submitAudio,playClueAudio,showClueMode,toggleOnlineScoreMode};
+  return {goCreate,goJoin,doJoinOrCreate,shareCode,pickCat,leave,exitRoom,hostStart,doReveal,confirmReveal,hostRound,restartRound,submitClue,hostGoVote,castVote,doTally,goGuess,nextRound,goResult,submitGuessWord,pickCatResult,showScores,showRejoinPicker,pickClueText,pickClueAudio,stopRec,previewAudio,submitAudio,playClueAudio,showClueMode,toggleOnlineScoreMode};
 })();
 
 // URL param: auto-open join with room code
